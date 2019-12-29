@@ -2,11 +2,10 @@
 
 Typically I skip any guide that requires me to make external accounts or has any propriety dependencies, so this guide doesn’t require any of that, and the end result will be deployed on local, so no need to worry about making trial accounts with cloud hosts.
 
-This guide will consider the development of a system comprised of multiple intercommunicating microservices. The stack of this application is one of personal preference, but there are any number of different variations, so check out the stack below before we go into further detail.
+This guide will consider the development of a system comprised of multiple intercommunicating micro-services. The stack of this application is one of personal preference, but there are any number of different variations, so check out the stack below before we go into further detail.
 
 ### Stack used in this guide:
-- Flask backends (But you could use NodeJS with express)
-SQLite3 with flask sqlalchemy
+- Flask backends (But you could use NodeJS with express) using SQLite3 with flask SQL Alchemy
 - VueJS frontend (React is another popular choice)
 - Docker
 - Docker-compose
@@ -118,14 +117,17 @@ A dummy flask app could look like the following:
 
 from flask import Flask, Response
 
-def create_application(db_uri: str) -> Flask:
+def create_application() -> Flask:
 	app = Flask(__name__)
 
-	app.route(‘/‘)
+	app.route("/")
 	def dummy():
-		return Response(‘This is InvSys’)
+		return Response("This is InvSys")
+
+  return app
 
 if __name__==“__main__”:
+  app = create_application()
 	app.run(host=“127.0.0.1”, port=5000, debug=True)
 ```
 
@@ -134,3 +136,20 @@ Before running this, you’ll notice that we import the flask module, so in your
 If you run this using ‘python application.py’, you should now be able to put ‘127.0.0.1:5000’ in your browser and see ‘This is InvSys’.
 
 By installing flask we have added a dependency to this component, and as it should be self contained and reproducible with a consistent dependency, we should track this dependancy. We will do this by making a ‘requirements.txt’ file which will list each dependancy and their version. While this can be made manually, we will cheat by running the command ‘pip freeze > requirements.txt’, which will list all the dependencies (in your hopefully clean python environment) and put them into requirements.txt file.
+
+```
+# requirements.txt
+
+Flask==1.1.1
+```
+
+This dummy application by itself isn't very useful, so before we start developing the actual application, lets define it. We know that the purpose is have resources that can be allocated, with 3 different types of resources. For each resource type, we want the following endpoints (we're being RESTful to an extent):
+
+- POST /{resource_type} - to create an instance of the resource
+- GET /{resource_type} - to get all instances of a given resource type
+- GET /{resource_type}/<resource_id> - get a specific instance
+- DELETE /{resource_type}/<resource_id> - delete a specific instance of a resource
+- POST /{resource_type}/<resource_id>/allocations - create an allocation for this resource instance
+- GET /{resource_type}/<resource_id>/allocations - get all allocations for this resource instance
+- GET /{resource_type}/<resource_id>/allocations/<allocation_id> - get a specific allocation
+- DELETE /{resource_type}/<resource_id>/allocations/<allocation_id> - delete the allocation
