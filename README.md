@@ -153,3 +153,107 @@ This dummy application by itself isn't very useful, so before we start developin
 - GET /{resource_type}/<resource_id>/allocations - get all allocations for this resource instance
 - GET /{resource_type}/<resource_id>/allocations/<allocation_id> - get a specific allocation
 - DELETE /{resource_type}/<resource_id>/allocations/<allocation_id> - delete the allocation
+
+Note: the resource_type is static, there are only 3 of them and there is no way to add more of them using this interface, while the resource_ids and allocation_ids are dynamic and can be created using this interface.
+
+Now we could go ahead and add a url rule for each of these to to application like such:
+
+```python
+from flask import Flask, jsonify
+
+def create_application() -> Flask:
+	app = Flask(__name__)
+
+	app.route("/<resource_type>", methods=['POST'])
+	def create_resource_instance(resource_type):
+    # Here we will create the resource instance
+		return jsonify({}), 201
+
+  # Continue making routes for all the other endpoint/method combinations
+  ...
+
+  return app
+```
+
+If we were to do this though, our applications.py file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
+
+While there may be other ways, I would think the best way to split the blueprints would be one for interval resources, and one for continuous resources. So in this case we will only have one blueprint, just for the continuous resources, but it allows us to make the code more flexible for future development. This reason alone isn't enough for using the Blueprint, because in development you often hear that making code future proof can be a waste of time, so there is another reason we will get to.
+
+So inside our invsys directory we will make a 'blueprints' directory with an '__init__.py', and make a file called 'continuous_resource_blueprint.py'.
+
+At this point your overall project directory should resemble this:
+
+```
+.
+└── invsys
+    ├── application.py
+    ├── requirements.txt
+    ├── blueprints
+        ├── __init__.py
+        └── continuous_resource_blueprint.py
+```
+
+I will mention two ways of handling the Blueprint with regard to the 3 resource types.
+
+First, we could just create a static Blueprint which has the resource type as a dynamic element in the url, then each route function will need to validate the resource type (perhaps using a decorator), it could look something like this:
+
+```python
+# blueprints/continuous_resource_blueprint.py
+
+from flask import Blueprint, jsonify
+
+blueprint = Blueprint('ContinuousResourceBlueprint', __name__)
+
+@blueprint.route('/<resource_type>', methods=['POST'])
+def create_continuous_resource(resource_type):
+  # Create the resource somehow
+  return jsonify({}), 201
+
+# Do the same for all the other endpoints
+...
+```
+And then in our application.py we would register the Blueprint like so:
+```python
+# application.py
+
+from flask import Flask, jsonify
+from blueprints.continuous_resource_blueprint import blueprint as continuous_resource_blueprint
+
+def create_application() -> Flask:
+	app = Flask(__name__)
+  app.register_blueprint(continuous_resource_blueprint)
+  return app
+```
+While this would work just fine, you'd need to somewhere define acceptable resource_types, either in the environment for flexibility, or in some config.
+
+If we know that the resource types are unlikely to change, then it would be nice for them to be clearly stated in the application.py. One way to do that would be using creating Blueprints using a function which states the resource type using closures.
+
+Before looking at the blueprint, if we look at the new applications.py file, it would look more like this:
+
+```python
+from flask import Flask
+from blueprints.continuous_resource_blueprint import create_continuous_resource_blueprint
+
+def create_app() -> Flask:
+    app = Flask(__name__)
+
+    # Register continuous resource blueprints
+    app.register_blueprint(
+        create_continuous_resource_blueprint(
+            blueprint_name="CarsBlueprint", # The name, used by flask when using the url_for function
+            resource_type="Car", # The resource type
+            resource_prefix="cars" # The base of the url for this resource type
+        )
+    )
+
+    # Then do the same for lorry and truck
+    ...
+
+    return app
+```
+The benefit of the above snippet is that by looking at my application.py one can clearly see that the application has a continuous resource of type Car with the base url of '/cars'.
+
+In our continuous_resource_blueprint.py we would then implement something like this:
+```python
+...
+```
