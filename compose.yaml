@@ -1,0 +1,10 @@
+version: '2'
+services:
+    gateway:
+        build: gateway
+        ports:
+            - "5000:5000"
+    invsys:
+        build: invsys
+        ports:
+            - "5001:5001"
