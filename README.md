@@ -300,4 +300,20 @@ Firstly, how do we actually use and initialise the database?
 --- create models directory
 --- create each model
 
-The common aspect will be the models. These are our
+The common aspect will be the models. These are our classes which represent the tables, columns, and relationships in the database.
+
+Because we are being generic, we only need two columns. One to represent a continuous resource, and one to represent a continuous resource allocation.
+
+So inside our 'models' directory we will create two new files, "continuous_resource.py" and "continuous_resource_allocation.py".
+
+Lets look at the "continuous_resource.py" first.
+
+```python
+from database import db
+
+class ContinuousResource(db.Model):
+  __tablename__ = "continous_resources" # Specified instead of using the default
+
+  # We want ...
+
+```
