@@ -255,5 +255,49 @@ The benefit of the above snippet is that by looking at my application.py one can
 
 In our continuous_resource_blueprint.py we would then implement something like this:
 ```python
-...
+from flask import Blueprint
+import logging
+
+logger = logging.getLogger(__name__) # We won't go into this in this guide
+
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
+    """
+    blueprint_name: name of the blueprint, used by Flask for routing
+    resource_type: name of the specific type of interval resource, such as Car or Lorry
+    resource_prefix: the plural resource to be used in the api endpoint, such as cars, resulting in "/cars"
+    """
+    blueprint = Blueprint(blueprint_name, __name__)
+
+    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
+    def create_resource():
+        logger.info("Creating resource")
+        return jsonify({}), 201
+
+    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
+    def get_resources():
+        """
+        Get all the resources, not including allocations
+        """
+        logger.info("Getting resources")
+        return jsonify({}), 201
+
+    # We then do this for all the other endpoints we listed
+    ...
 ```
+
+So we have the general setup of the Flask app and the blueprints for handling our three continuous resources. You'll note that the above snippet isn't using the resource_type parameter for anything, and this is because we have been neglecting an essential part of this component.
+
+### How and where do we store the resources and allocations?
+Well, I said in the introduction that we were going to use SQLAlchemy, so that was a spoiler. We will store the allocations and resources in an SQLite3 database and use SQLAlchemy as an ORM for accessing the database. More specifically we will use flask-SQLAlchemy which you can install using 'pip install flask-SQLAlchemy', remember, you will need to update your requirements.txt file with this new dependancy.
+
+As is typical in this guide, I will show you two ways to handle the database related logic, with the latter being my preferred approach in this scenario, but we will get to this shortly as there is some setup and common work that needs to be done first.
+
+Firstly, how do we actually use and initialise the database?
+
+--- talk about the db and db init all the in the application.py
+--- mention the circular dependency problem
+--- introduce database.py
+--- create models directory
+--- create each model
+
+The common aspect will be the models. These are our
