@@ -5,8 +5,8 @@ Typically I skip any guide that requires me to make external accounts or has any
 This guide will consider the development of a system comprised of multiple intercommunicating micro-services. The stack of this application is one of personal preference, but there are any number of different variations, so check out the stack below before we go into further detail.
 
 ### Stack used in this guide:
-- Flask backends (But you could use NodeJS with express) using SQLite3 with flask SQL Alchemy
-- VueJS frontend (React is another popular choice)
+- Flask backends (But you could use NodeJS with express)
+- SQLite3 with flask SQL Alchemy
 - Docker
 - Docker-compose
 - Postman
@@ -15,7 +15,7 @@ This guide will consider the development of a system comprised of multiple inter
 - A python environment handler, because we will create multiple environments. I use conda, but you could also using something like venv or poetry.
 - You need to have docker installed (add link), this guide won’t cover that process because the docker documentation is very complete.
 - You’ll need NodeJS and npm
-- Some knowledge of Flask apps, sql orms, NodeJS, VueJS. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
+- Some knowledge of Flask apps, sql orms, and docker. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
 
 ### Terminology:
 
@@ -30,7 +30,7 @@ Having started writing this, I realised that I quickly start using terms which m
 
 ## When would we need to make an application like this?
 
-What we intend to make is a full stack application. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like dynamo or redis (which can be used as a database).
+What we intend to make is a backend application consisting of multiple microservices. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like dynamo or redis (which can be used as a database).
 
 ## Context
 
@@ -256,9 +256,6 @@ The benefit of the above snippet is that by looking at my application.py one can
 In our continuous_resource_blueprint.py we would then implement something like this:
 ```python
 from flask import Blueprint
-import logging
-
-logger = logging.getLogger(__name__) # We won't go into this in this guide
 
 def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
     """
@@ -270,15 +267,10 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     @blueprint.route(f'/{resource_prefix}', methods=["POST"])
     def create_resource():
-        logger.info("Creating resource")
         return jsonify({}), 201
 
     @blueprint.route(f'/{resource_prefix}', methods=["GET"])
     def get_resources():
-        """
-        Get all the resources, not including allocations
-        """
-        logger.info("Getting resources")
         return jsonify({}), 201
 
     # We then do this for all the other endpoints we listed
@@ -433,9 +425,6 @@ from flask import Blueprint
 from database import db
 from models.continuous_resource import ContinuousResource
 import uuid
-import logging
-
-logger = logging.getLogger(__name__) # We won't go into this in this guide
 
 def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
     """
@@ -447,7 +436,6 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     @blueprint.route(f'/{resource_prefix}', methods=["POST"])
     def create_resource():
-        logger.info("Creating resource")
 				new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
 				db.session.add(new_resource)
 				db.session.commit()
@@ -455,10 +443,6 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     @blueprint.route(f'/{resource_prefix}', methods=["GET"])
     def get_resources():
-        """
-        Get all the resources, not including allocations
-        """
-        logger.info("Getting resources")
 				resources = ContinuousResource.query.filter_by(resource_type=resource_type)
         return jsonify({}), 201
 
@@ -469,4 +453,183 @@ If you look at the above snippet, you will see that we mention the database and 
 
 The second approach attempts to decouple the blueprints from the by using a concept know as DAOs (data access objects) or DALs (data access layers).
 
-For each model we will create a DAO which will be used to handle any related databasing for said model. The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
+We will create a DAO which will be used to handle any related databasing for continous resources (including allocations). The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
+
+In invsys we will create a new directory called 'daos' with an __init__.py, then a dao file 'continuous_resource_dao.py'.
+
+Our directory now looks like this:
+
+```
+.
+├── application.py
+├── blueprints
+│   ├── __init__.py
+│   └── continuous_resource_blueprint.py
+├── daos
+│   ├── __init__.py
+│   └── continuous_resource_dao.py
+└── models
+    ├── __init__.py
+    ├── continuous_resource.py
+    └── continuous_resource_allocation.py
+```
+Our DAO is just a class containing static methods for each database related query
+
+```python
+# continuous_resource_dao.py
+
+from database import db
+from typing import List
+from models.continuous_resource import ContinuousResource
+import uuid
+
+class ContinuousResourceDao:
+    @staticmethod
+    def create_resource(resource_type, name) -> ContinuousResource:
+        resource = ContinuousResource(
+            id=str(uuid.uuid4()),
+            resource_type=resource_type,
+            name=name
+        )
+        db.session.add(resource)
+        db.session.commit()
+        return resource
+
+    @staticmethod
+    def get_resources(resource_type) -> List[ContinuousResource]:
+        return ContinuousResource.query.filter_by(resource_type=resource_type)
+
+    # There will be more functions for each other query
+		...
+```
+And then in our blueprint, we use the DAO instead of the direct database accesses
+
+```python
+from flask import Blueprint
+from daos.continuous_resource_dao import ContinuousResourceDao
+
+def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+    """
+    blueprint_name: name of the blueprint, used by Flask for routing
+    resource_type: name of the specific type of interval resource, such as Car
+    resource_prefix: the plural resource to be used in the api endpoint, such as cars, resulting in "/cars"
+    """
+    blueprint = Blueprint(blueprint_name, __name__)
+
+    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
+    def create_resource():
+        resource = ContinuousResourceDao.create_resource(
+					resource_type=resource_type,
+					name=request.get_json(force=True)['name']
+				)
+        return jsonify({}), 201
+
+    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
+    def get_resources():
+				resources = ContinuousResourceDao.get_resources(resource_type=resource_type)
+        return jsonify({}), 200
+
+		# Then all the other endpoints
+		...
+```
+
+Ok, so we have covered the blueprints, the routing of endpoints, the databasing and daos, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
+
+We can't directly return these objects in our API. Our API returns json. So instead we can create dictionary representations of these objects, and allow flask to return them as json using the jsonify function. So each object needs serialiser.
+
+We can create a new directory called `serialisers` with an `__init__.py`, and we will create a serialiser for each model. So we create `continuous_resource_serialiser.py` and `continuous_resource_allocation_serialiser.py`.
+
+Directory now looks like this:
+
+```
+.
+├── application.py
+├── blueprints
+│   ├── __init__.py
+│   └── continuous_resource_blueprint.py
+├── daos
+│   ├── __init__.py
+│   └── continuous_resource_dao.py
+├── models
+│   ├── __init__.py
+│   ├── continuous_resource.py
+│   └── continuous_resource_allocation.py
+└── serialisers
+    ├── __init__.py
+    ├── continuous_resource_allocation_serialiser.py
+    └── continuous_resource_serialiser.py
+```
+
+The serialiser takes an instance of the object and returns a dictionary with serialisable data types. So in our serialisers we need to convert datetimes into strings else we will encounter problems using jsonify.
+
+```python
+# continuous_resource_serialiser.py
+
+class ContinuousResourceSerialiser:
+    @staticmethod
+    def serialise(resource) -> dict:
+        return {
+            'id': resource.id,
+            'name': resource.name,
+            'resource_type': resource.resource_type,
+            'created': resource.created.strftime("%Y-%m-%dT%H:%M:%S")
+        }
+```
+
+and:
+
+```python
+# continuous_resource_allocation_serialiser.py
+
+class ContinuousResourceAllocationSerialiser:
+    @staticmethod
+    def serialise(allocation) -> dict:
+        return {
+            'id': allocation.id,
+            'resource_type': allocation.resource_type,
+            'resource_id': allocation.resource_id,
+            'from_infinity': allocation.from_infinity,
+            'to_infinity': allocation.to_infinity,
+            'from_datetime': (
+                allocation.from_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+                if allocation.from_datetime
+                else None
+            ),
+            'to_datetime': (
+                allocation.to_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+                if allocation.to_datetime
+                else None
+            ),
+            'allocation_type': allocation.allocation_type,
+            'description': allocation.description,
+            'dump': allocation.dump
+        }
+```
+
+Now in our blueprint we serialise our model instances before returning them.
+
+```python
+def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+    """
+    blueprint_name: name of the blueprint, used by Flask for routing
+    resource_type: name of the specific type of interval resource, such as boy bay or payload bay
+    resource_prefix: the plural resource to be used in the api endpoint, such as bot_bay, resulting in "/bot_bays"
+    """
+    blueprint = Blueprint(blueprint_name, __name__)
+
+    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
+    def create_resource():
+        resource = ContinuousResourceDao.create_resource(
+					resource_type=resource_type,
+					name=request.get_json(force=True)['name']
+				)
+        return ContinuousResourceSerialiser.serialise(resource), 201
+
+    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
+    def get_resources():
+        return jsonify([
+            ContinuousResourceSerialiser.serialise(resource)
+            for resource in ContinuousResourceDao.get_resources(resource_type=resource_type)
+        ]), 200
+```
+Note that we use 201 as a status code if something has been created, and 200 in cases where the request is OK but nothing is created.
