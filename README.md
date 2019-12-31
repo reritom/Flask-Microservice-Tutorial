@@ -188,7 +188,7 @@ At this point your overall project directory should resemble this:
 └── invsys
     ├── application.py
     ├── requirements.txt
-    ├── blueprints
+    └── blueprints
         ├── __init__.py
         └── continuous_resource_blueprint.py
 ```
@@ -294,26 +294,179 @@ As is typical in this guide, I will show you two ways to handle the database rel
 
 Firstly, how do we actually use and initialise the database?
 
---- talk about the db and db init all the in the application.py
---- mention the circular dependency problem
---- introduce database.py
---- create models directory
---- create each model
+In single file flask applications, you will typically see something like this in guides:
+```python
+# application.py
 
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///mydatabase.db"
+db = SQLAlchemy(app)
+
+# Create the models (we'll get to this after)
+with app.app_context():
+    db.create_all()
+
+# Then afterwards we register routes or blueprints that we have imported
+...
+```
+But in doing this we create a problem. Our routes/models/blueprints are in other files, and they might need access to the database to make objects and commit changes. So in this file you will be importing those modules, and in those modules you would need to import the database from this file, which creates a circular import problem.
+
+To avoid this circular import problem, we just put the database in a separate file. In the same directory as your 'application.py', create a new file called 'database.py' which should look like this:
+```python
+# database.py
+
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+```
+Then from our 'application.py' and our routes and blueprints, we can import the db object from this module with no circular dependancy issues.
+
+So our 'application.py' could now look like this instead:
+```python
+from flask import Flask
+from database import db
+
+def create_app(db_uri: str) -> Flask:
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    # We still need to initialise the db with the flask app, but we can do this after the object has been initialised by using init_app
+    db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
+    # Here we would then register our blueprints or routes
+    ...
+
+    return app
+```
 The common aspect will be the models. These are our classes which represent the tables, columns, and relationships in the database.
 
-Because we are being generic, we only need two columns. One to represent a continuous resource, and one to represent a continuous resource allocation.
+Because we are being generic, we only need two tables. One to represent a continuous resource, and one to represent a continuous resource allocation.
 
-So inside our 'models' directory we will create two new files, "continuous_resource.py" and "continuous_resource_allocation.py".
+In the invsys directory create a subdirectory called 'models' with an __init__.py and then inside our 'models' directory we will create two new files, "continuous_resource.py" and "continuous_resource_allocation.py".
 
-Lets look at the "continuous_resource.py" first.
+Your invsys directory should now look like this:
+
+```
+.
+├── application.py
+├── blueprints
+│   ├── __init__.py
+│   └── continuous_resource_blueprint.py
+└── models
+    ├── __init__.py
+    ├── continuous_resource.py
+    └── continuous_resource_allocation.py
+```
+
+Lets look at the "continuous_resource.py" first. The ContinuousResource model represents a car/lorry/truck, so each we need a column for the resource type, the resource name (a specific unique identifier which is human readable) and a uuid (also unique, but just a 36 digit uuid, which is somewhat a duplication in purpose as the name column, but the uuid will be used when working with the endpoints). We will add a 'created' datetime column too.
+
+From a ContinuousResource, it will be useful to be able to access all the allocation related to this resource, so we create an 'allocations' relationship.
 
 ```python
+# continuous_resource.py
+
 from database import db
+import datetime
 
 class ContinuousResource(db.Model):
   __tablename__ = "continous_resources" # Specified instead of using the default
 
-  # We want ...
+	id = db.Column(db.String(36), primary_key=True, unique=True)
+  name = db.Column(db.String(36), primary_key=True, unique=True) # Eg Car1
+  resource_type = db.Column(db.String(36), primary_key=True) # Car/Lorry/Truck
+  created = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 
+	# Children
+  allocations = db.relationship("ContinuousResourceAllocation", back_populates="resource", lazy=True)
 ```
+
+Now we look at the 'continuous_resource_allocation.py'. We can define a ContinuousResourceAllocation as an object with a from_datetime, and a to_datetime. Then in some cases, the allocation might want to be considered as from infinity or to infinity, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it unallocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
+
+To finalise the relationship between the two models, we pass the resource_id of the related ContinuousResource as a ForeignKey column, and then make the 'resource' relationship.
+
+```python
+# continuous_resource_allocation.py
+
+from database import db
+import datetime
+
+class ContinuousResourceAllocation(db.Model):
+    __tablename__ = "continuous_resource_allocations"
+
+    id = db.Column(db.String(36), primary_key=True, unique=True)
+    resource_type = db.Column(db.String(36), primary_key=True)
+    created = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    from_infinity = db.Column(db.Boolean, default=False)
+    to_infinity = db.Column(db.Boolean, default=False)
+    from_datetime = db.Column(db.DateTime, nullable=True)
+    to_datetime = db.Column(db.DateTime, nullable=True)
+    allocation_type = db.Column(db.String(20))
+    description = db.Column(db.String(100), nullable=True)
+    json_dump = db.Column(db.String(200), nullable=True)
+
+		# Parents
+    resource_id = db.Column(db.ForeignKey('continuous_resources.id'))
+    resource = db.relationship('ContinuousResource', foreign_keys=resource_id)
+
+    @property
+    def dump(self) -> dict:
+        try:
+            return json.loads(self.json_dump)
+        except:
+            return {}
+	```
+
+	### We have our models, now what?
+	Well our blueprint doesn't actually do anything yet, it just defines our endpoints and methods, so we have to tell each of our endpoint route functions what to do with the database. Now before, I mentioned there were two ways of doing this.
+
+	Lets look at the first way where in our blueprint, we consume the models and database directly.
+
+	Our 'continuous_resource_blueprint.py' could start to look like this (Note: we aren't returning anything yet from our endpoint functions, we'll get to that):
+
+	```python
+	from flask import Blueprint
+	from database import db
+	from models.continuous_resource import ContinuousResource
+	import uuid
+	import logging
+
+	logger = logging.getLogger(__name__) # We won't go into this in this guide
+
+	def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
+	    """
+	    blueprint_name: name of the blueprint, used by Flask for routing
+	    resource_type: name of the specific type of interval resource, such as Car or Lorry
+	    resource_prefix: the plural resource to be used in the api endpoint, such as cars, resulting in "/cars"
+	    """
+	    blueprint = Blueprint(blueprint_name, __name__)
+
+	    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
+	    def create_resource():
+	        logger.info("Creating resource")
+					new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
+					db.session.add(new_resource)
+					db.session.commit()
+	        return jsonify({}), 201
+
+	    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
+	    def get_resources():
+	        """
+	        Get all the resources, not including allocations
+	        """
+	        logger.info("Getting resources")
+					resources = ContinuousResource.query.filter_by(resource_type=resource_type)
+	        return jsonify({}), 201
+
+	    # We then do this for all the other endpoints we listed
+	    ...
+```
+If you look at the above snippet, you will see that we mention the database and models directly. For some applications this is fine, but imagine that we later decide to change what sort of database we are using. Or we change our ORM. This means all our database references in our blueprints and routes will need updating. This means our blueprints are 'coupled' with our databasing.
+
+The second approach attempts to decouple the blueprints from the by using a concept know as DAOs (data access objects) or DALs (data access layers).
+
+For each model we will create a DAO which will be used to handle any related databasing for said model. The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
