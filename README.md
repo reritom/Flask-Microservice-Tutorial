@@ -419,51 +419,51 @@ class ContinuousResourceAllocation(db.Model):
             return json.loads(self.json_dump)
         except:
             return {}
-	```
+```
 
-	### We have our models, now what?
-	Well our blueprint doesn't actually do anything yet, it just defines our endpoints and methods, so we have to tell each of our endpoint route functions what to do with the database. Now before, I mentioned there were two ways of doing this.
+### We have our models, now what?
+Well our blueprint doesn't actually do anything yet, it just defines our endpoints and methods, so we have to tell each of our endpoint route functions what to do with the database. Now before, I mentioned there were two ways of doing this.
 
-	Lets look at the first way where in our blueprint, we consume the models and database directly.
+Lets look at the first way where in our blueprint, we consume the models and database directly.
 
-	Our 'continuous_resource_blueprint.py' could start to look like this (Note: we aren't returning anything yet from our endpoint functions, we'll get to that):
+Our 'continuous_resource_blueprint.py' could start to look like this (Note: we aren't returning anything yet from our endpoint functions, we'll get to that):
 
-	```python
-	from flask import Blueprint
-	from database import db
-	from models.continuous_resource import ContinuousResource
-	import uuid
-	import logging
+```python
+from flask import Blueprint
+from database import db
+from models.continuous_resource import ContinuousResource
+import uuid
+import logging
 
-	logger = logging.getLogger(__name__) # We won't go into this in this guide
+logger = logging.getLogger(__name__) # We won't go into this in this guide
 
-	def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
-	    """
-	    blueprint_name: name of the blueprint, used by Flask for routing
-	    resource_type: name of the specific type of interval resource, such as Car or Lorry
-	    resource_prefix: the plural resource to be used in the api endpoint, such as cars, resulting in "/cars"
-	    """
-	    blueprint = Blueprint(blueprint_name, __name__)
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
+    """
+    blueprint_name: name of the blueprint, used by Flask for routing
+    resource_type: name of the specific type of interval resource, such as Car or Lorry
+    resource_prefix: the plural resource to be used in the api endpoint, such as cars, resulting in "/cars"
+    """
+    blueprint = Blueprint(blueprint_name, __name__)
 
-	    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
-	    def create_resource():
-	        logger.info("Creating resource")
-					new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
-					db.session.add(new_resource)
-					db.session.commit()
-	        return jsonify({}), 201
+    @blueprint.route(f'/{resource_prefix}', methods=["POST"])
+    def create_resource():
+        logger.info("Creating resource")
+				new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
+				db.session.add(new_resource)
+				db.session.commit()
+        return jsonify({}), 201
 
-	    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
-	    def get_resources():
-	        """
-	        Get all the resources, not including allocations
-	        """
-	        logger.info("Getting resources")
-					resources = ContinuousResource.query.filter_by(resource_type=resource_type)
-	        return jsonify({}), 201
+    @blueprint.route(f'/{resource_prefix}', methods=["GET"])
+    def get_resources():
+        """
+        Get all the resources, not including allocations
+        """
+        logger.info("Getting resources")
+				resources = ContinuousResource.query.filter_by(resource_type=resource_type)
+        return jsonify({}), 201
 
-	    # We then do this for all the other endpoints we listed
-	    ...
+    # We then do this for all the other endpoints we listed
+    ...
 ```
 If you look at the above snippet, you will see that we mention the database and models directly. For some applications this is fine, but imagine that we later decide to change what sort of database we are using. Or we change our ORM. This means all our database references in our blueprints and routes will need updating. This means our blueprints are 'coupled' with our databasing.
 
