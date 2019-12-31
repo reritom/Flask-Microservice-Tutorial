@@ -346,6 +346,7 @@ Your invsys directory should now look like this:
 ```
 .
 ├── application.py
+├── requirements.txt
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -462,6 +463,7 @@ Our directory now looks like this:
 ```
 .
 ├── application.py
+├── requirements.txt
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -544,6 +546,7 @@ Directory now looks like this:
 ```
 .
 ├── application.py
+├── requirements.txt
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -609,7 +612,9 @@ class ContinuousResourceAllocationSerialiser:
 Now in our blueprint we serialise our model instances before returning them.
 
 ```python
-def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+from flask import Blueprint
+
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
     """
     blueprint_name: name of the blueprint, used by Flask for routing
     resource_type: name of the specific type of interval resource, such as boy bay or payload bay
@@ -640,4 +645,4 @@ We will have a look together now at the function for creating a new allocation, 
 
 ...
 
-If you run `python application.py` you should now be able to target the application to create resources and allocations with useful responses.
+If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
