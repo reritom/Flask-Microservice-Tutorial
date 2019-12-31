@@ -633,3 +633,11 @@ def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: s
         ]), 200
 ```
 Note that we use 201 as a status code if something has been created, and 200 in cases where the request is OK but nothing is created.
+
+You'll need to fill in the blanks for all the other endpoints I've glossed other (look at the source code in the repo).
+
+We will have a look together now at the function for creating a new allocation, because this function needs to validate that the allocation can be made.
+
+...
+
+If you run `python application.py` you should now be able to target the application to create resources and allocations with useful responses.
