@@ -118,17 +118,17 @@ A dummy flask app could look like the following:
 from flask import Flask, Response
 
 def create_application() -> Flask:
-	app = Flask(__name__)
+  app = Flask(__name__)
 
-	app.route("/")
-	def dummy():
-		return Response("This is InvSys")
+    app.route("/")
+    def dummy():
+        return Response("This is InvSys")
 
   return app
 
 if __name__==“__main__”:
   app = create_application()
-	app.run(host=“127.0.0.1”, port=5000, debug=True)
+    app.run(host=“127.0.0.1”, port=5000, debug=True)
 ```
 
 Before running this, you’ll notice that we import the flask module, so in your new python environment for invsys, running ‘pip install flask’, else you will get an ImportError like “ImportError: No module named flask”
@@ -162,12 +162,12 @@ Now we could go ahead and add a url rule for each of these to to application lik
 from flask import Flask, jsonify
 
 def create_application() -> Flask:
-	app = Flask(__name__)
+    app = Flask(__name__)
 
-	app.route("/<resource_type>", methods=['POST'])
-	def create_resource_instance(resource_type):
+    app.route("/<resource_type>", methods=['POST'])
+    def create_resource_instance(resource_type):
     # Here we will create the resource instance
-		return jsonify({}), 201
+        return jsonify({}), 201
 
   # Continue making routes for all the other endpoint/method combinations
   ...
@@ -206,8 +206,8 @@ blueprint = Blueprint('ContinuousResourceBlueprint', __name__)
 
 @blueprint.route('/<resource_type>', methods=['POST'])
 def create_continuous_resource(resource_type):
-  # Create the resource somehow
-  return jsonify({}), 201
+    # Create the resource somehow
+    return jsonify({}), 201
 
 # Do the same for all the other endpoints
 ...
@@ -220,9 +220,9 @@ from flask import Flask, jsonify
 from blueprints.continuous_resource_blueprint import blueprint as continuous_resource_blueprint
 
 def create_application() -> Flask:
-	app = Flask(__name__)
-  app.register_blueprint(continuous_resource_blueprint)
-  return app
+    app = Flask(__name__)
+    app.register_blueprint(continuous_resource_blueprint)
+    return app
 ```
 While this would work just fine, you'd need to somewhere define acceptable resource_types, either in the environment for flexibility, or in some config.
 
@@ -367,15 +367,15 @@ from database import db
 import datetime
 
 class ContinuousResource(db.Model):
-  __tablename__ = "continous_resources" # Specified instead of using the default
+    __tablename__ = "continous_resources" # Specified instead of using the default
 
-	id = db.Column(db.String(36), primary_key=True, unique=True)
-  name = db.Column(db.String(36), primary_key=True, unique=True) # Eg Car1
-  resource_type = db.Column(db.String(36), primary_key=True) # Car/Lorry/Truck
-  created = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    id = db.Column(db.String(36), primary_key=True, unique=True)
+    name = db.Column(db.String(36), primary_key=True, unique=True) # Eg Car1
+    resource_type = db.Column(db.String(36), primary_key=True) # Car/Lorry/Truck
+    created = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
 
-	# Children
-  allocations = db.relationship("ContinuousResourceAllocation", back_populates="resource", lazy=True)
+    # Children
+    allocations = db.relationship("ContinuousResourceAllocation", back_populates="resource", lazy=True)
 ```
 
 Now we look at the 'continuous_resource_allocation.py'. We can define a ContinuousResourceAllocation as an object with a from_datetime, and a to_datetime. Then in some cases, the allocation might want to be considered as from infinity or to infinity, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it unallocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
@@ -402,7 +402,7 @@ class ContinuousResourceAllocation(db.Model):
     description = db.Column(db.String(100), nullable=True)
     json_dump = db.Column(db.String(200), nullable=True)
 
-		# Parents
+    # Parents
     resource_id = db.Column(db.ForeignKey('continuous_resources.id'))
     resource = db.relationship('ContinuousResource', foreign_keys=resource_id)
 
@@ -437,14 +437,14 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     @blueprint.route(f'/{resource_prefix}', methods=["POST"])
     def create_resource():
-				new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
-				db.session.add(new_resource)
-				db.session.commit()
+        new_resource = ContinuousResource(id=str(uuid.uuid4()), **request.get_json()) # We assume request has everything we need in it for now
+        db.session.add(new_resource)
+        db.session.commit()
         return jsonify({}), 201
 
     @blueprint.route(f'/{resource_prefix}', methods=["GET"])
     def get_resources():
-				resources = ContinuousResource.query.filter_by(resource_type=resource_type)
+        resources = ContinuousResource.query.filter_by(resource_type=resource_type)
         return jsonify({}), 201
 
     # We then do this for all the other endpoints we listed
@@ -502,7 +502,7 @@ class ContinuousResourceDao:
         return ContinuousResource.query.filter_by(resource_type=resource_type)
 
     # There will be more functions for each other query
-		...
+        ...
 ```
 And then in our blueprint, we use the DAO instead of the direct database accesses
 
@@ -521,18 +521,18 @@ def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: s
     @blueprint.route(f'/{resource_prefix}', methods=["POST"])
     def create_resource():
         resource = ContinuousResourceDao.create_resource(
-					resource_type=resource_type,
-					name=request.get_json(force=True)['name']
-				)
+            resource_type=resource_type,
+            name=request.get_json(force=True)['name']
+        )
         return jsonify({}), 201
 
     @blueprint.route(f'/{resource_prefix}', methods=["GET"])
     def get_resources():
-				resources = ContinuousResourceDao.get_resources(resource_type=resource_type)
+        resources = ContinuousResourceDao.get_resources(resource_type=resource_type)
         return jsonify({}), 200
 
-		# Then all the other endpoints
-		...
+        # Then all the other endpoints
+        ...
 ```
 
 Ok, so we have covered the blueprints, the routing of endpoints, the databasing and daos, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
@@ -625,9 +625,9 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
     @blueprint.route(f'/{resource_prefix}', methods=["POST"])
     def create_resource():
         resource = ContinuousResourceDao.create_resource(
-					resource_type=resource_type,
-					name=request.get_json(force=True)['name']
-				)
+            resource_type=resource_type,
+            name=request.get_json(force=True)['name']
+        )
         return ContinuousResourceSerialiser.serialise(resource), 201
 
     @blueprint.route(f'/{resource_prefix}', methods=["GET"])
@@ -646,3 +646,15 @@ We will have a look together now at the function for creating a new allocation, 
 ...
 
 If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
+
+## Gateway Application
+### Why do we need one?
+- The Gateway allows us to present a single public interface to access our microservices. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
+- Another benefit is to orchestrate the authentication and authorisation of requests. Authentication is typically handled by an external system, but then the Gateway will communicate with that system to confirm requests are authorised before internally routing them to the correct microservices.
+- The Gateway can also handle authorisation, which is determining whether requests have permissions to access certain resources. In many cases, like the invsys system we developed above, in our service we don't take into consideration which client is consuming the service. By making our services client-agnostic, we allow them to focus on their specific purpose which makes them more maintainable, more discrete, and more reusable. So our Gateway can then integrate middleware that determines which resources belong to which clients, which itself might done by integrating another microservice for handling client accounts and resources.
+
+### What will ours do?
+We want our gateway to just route requests to our invsys service. Nothing else will be integrated, but by doing this you will see how to consume one service from another service, and when you can do it for one, you can do it for many.
+
+### Lets do it
+...
