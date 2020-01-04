@@ -14,7 +14,6 @@ This guide will consider the development of a system comprised of multiple inter
 ### Prerequisites:
 - A python environment handler, because we will create multiple environments. I use conda, but you could also using something like venv or poetry.
 - You need to have docker installed (add link), this guide won’t cover that process because the docker documentation is very complete.
-- You’ll need NodeJS and npm
 - Some knowledge of Flask apps, sql orms, and docker. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
 
 ### Terminology:
@@ -105,11 +104,11 @@ Inventory management flask app -> API gateway application -> Frontend
 
 ## Inventory Management App (InvSys):
 
-Start by creating a new directory in our application directory, we will call it ‘invsys’, short for inventory system. ‘cd’ into this directory, because all development in this section will be done in invsys. You should create a new python environment for this component so it can be self contained with its own dependencies tracked.
+Start by creating a new directory in our project directory, we will call it `invsys`, short for inventory system. `cd` into this directory, because all development in this section will be done in `invsys`. You should create a new python environment for this component so it can be self contained with its own dependencies tracked.
 
 This application is a Flask app which exposes an API for creating the resources (car, truck, lorry) and creating allocations for the instances.
 
-So we create a file called application.py which we will use to create a function that will create our application. Why a function to create the app instead of just instantiating the app at module level? Well if we want a dynamic configuration, such as to create a test app or a production app, then it is helpful to be able to pass parameters or configs while creating the app. If we define the app at module level, without a function to create it, it is harder to handle dynamic configurations.
+So we create a file called `application.py` which we will use to create a function that will create our application. Why a function to create the app instead of just instantiating the app at module level? Well if we want a dynamic configuration, such as to create a test app or a production app, then it is helpful to be able to pass parameters or configs while creating the app. If we define the app at module level, without a function to create it, it is harder to handle dynamic configurations.
 
 A dummy flask app could look like the following:
 ```python
@@ -131,11 +130,11 @@ if __name__==“__main__”:
     app.run(host=“127.0.0.1”, port=5000, debug=True)
 ```
 
-Before running this, you’ll notice that we import the flask module, so in your new python environment for invsys, running ‘pip install flask’, else you will get an ImportError like “ImportError: No module named flask”
+Before running this, you’ll notice that we import the flask module, so in your new python environment for `invsys`, running `pip install flask`, else you will get an ImportError like `“ImportError: No module named flask”`
 
-If you run this using ‘python application.py’, you should now be able to put ‘127.0.0.1:5000’ in your browser and see ‘This is InvSys’.
+If you run this using `python application.py`, you should now be able to put `127.0.0.1:5000` in your browser and see `This is InvSys`.
 
-By installing flask we have added a dependency to this component, and as it should be self contained and reproducible with a consistent dependency, we should track this dependancy. We will do this by making a ‘requirements.txt’ file which will list each dependancy and their version. While this can be made manually, we will cheat by running the command ‘pip freeze > requirements.txt’, which will list all the dependencies (in your hopefully clean python environment) and put them into requirements.txt file.
+By installing flask we have added a dependency to this component, and as it should be self contained and reproducible with a consistent dependency, we should track this dependancy. We will do this by making a `requirements.txt` file which will list each dependancy and their version. While this can be made manually, we will cheat by running the command `pip freeze > requirements.txt`, which will list all the dependencies (in your hopefully clean python environment) and put them into the requirements.txt file.
 
 ```
 # requirements.txt
@@ -175,11 +174,11 @@ def create_application() -> Flask:
   return app
 ```
 
-If we were to do this though, our applications.py file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
+If we were to do this though, our `applications.py` file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
 
 While there may be other ways, I would think the best way to split the blueprints would be one for interval resources, and one for continuous resources. So in this case we will only have one blueprint, just for the continuous resources, but it allows us to make the code more flexible for future development. This reason alone isn't enough for using the Blueprint, because in development you often hear that making code future proof can be a waste of time, so there is another reason we will get to.
 
-So inside our invsys directory we will make a 'blueprints' directory with an '__init__.py', and make a file called 'continuous_resource_blueprint.py'.
+So inside our `invsys` directory we will make a `blueprints` directory with an `__init__.py`, and make a file called `continuous_resource_blueprint.py`.
 
 At this point your overall project directory should resemble this:
 
@@ -226,9 +225,9 @@ def create_application() -> Flask:
 ```
 While this would work just fine, you'd need to somewhere define acceptable resource_types, either in the environment for flexibility, or in some config.
 
-If we know that the resource types are unlikely to change, then it would be nice for them to be clearly stated in the application.py. One way to do that would be using creating Blueprints using a function which states the resource type using closures.
+If we know that the resource types are unlikely to change, then it would be nice for them to be clearly stated in the `application.py`. One way to do that would be using creating Blueprints using a function which states the resource type using closures.
 
-Before looking at the blueprint, if we look at the new applications.py file, it would look more like this:
+Before looking at the blueprint, if we look at the new `applications.py` file, it would look more like this:
 
 ```python
 from flask import Flask
@@ -243,7 +242,8 @@ def create_app() -> Flask:
             blueprint_name="CarsBlueprint", # The name, used by flask when using the url_for function
             resource_type="Car", # The resource type
             resource_prefix="cars" # The base of the url for this resource type
-        )
+        ),
+        url_prefix='/api'
     )
 
     # Then do the same for lorry and truck
@@ -251,9 +251,11 @@ def create_app() -> Flask:
 
     return app
 ```
-The benefit of the above snippet is that by looking at my application.py one can clearly see that the application has a continuous resource of type Car with the base url of '/cars'.
+The benefit of the above snippet is that by looking at my `application.py` one can clearly see that the application has a continuous resource of type `Car` with the base url of `/cars`.
 
-In our continuous_resource_blueprint.py we would then implement something like this:
+Note in the above snippet, I've added the `url_prefix` to the registered blueprint. This means to access any of our urls in the blueprint, we need to put `/api` first like, `/api/cars/resources`. I do this to allow my backends to expose simple UIs using endpoints that don't have the `/api` prefix. For example I might route `/` to return a simple UI showing our inventory in this application, but we won't cover that. In other applications you might see prefixes like `/api/v1` and then they will create a new blueprint with the prefix `/api/v2` if they change the functionality of the service or are forced to add some backwards incompatible change.
+
+In our `continuous_resource_blueprint.py` we would then implement something like this:
 ```python
 from flask import Blueprint
 
@@ -280,7 +282,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 So we have the general setup of the Flask app and the blueprints for handling our three continuous resources. You'll note that the above snippet isn't using the resource_type parameter for anything, and this is because we have been neglecting an essential part of this component.
 
 ### How and where do we store the resources and allocations?
-Well, I said in the introduction that we were going to use SQLAlchemy, so that was a spoiler. We will store the allocations and resources in an SQLite3 database and use SQLAlchemy as an ORM for accessing the database. More specifically we will use flask-SQLAlchemy which you can install using 'pip install flask-SQLAlchemy', remember, you will need to update your requirements.txt file with this new dependancy.
+Well, I said in the introduction that we were going to use SQLAlchemy, so that was a spoiler. We will store the allocations and resources in an SQLite3 database and use SQLAlchemy as an ORM for accessing the database. More specifically we will use flask-SQLAlchemy which you can install using `pip install flask-SQLAlchemy`, remember, you will need to update your requirements.txt file with this new dependancy.
 
 As is typical in this guide, I will show you two ways to handle the database related logic, with the latter being my preferred approach in this scenario, but we will get to this shortly as there is some setup and common work that needs to be done first.
 
@@ -306,7 +308,7 @@ with app.app_context():
 ```
 But in doing this we create a problem. Our routes/models/blueprints are in other files, and they might need access to the database to make objects and commit changes. So in this file you will be importing those modules, and in those modules you would need to import the database from this file, which creates a circular import problem.
 
-To avoid this circular import problem, we just put the database in a separate file. In the same directory as your 'application.py', create a new file called 'database.py' which should look like this:
+To avoid this circular import problem, we just put the database in a separate file. In the same directory as your `application.py`, create a new file called `database.py` which should look like this:
 ```python
 # database.py
 
@@ -335,11 +337,11 @@ def create_app(db_uri: str) -> Flask:
 
     return app
 ```
-The common aspect will be the models. These are our classes which represent the tables, columns, and relationships in the database.
+The common aspect will be the models. These are our classes which represent the tables, and the subsequent, and relationships in the database.
 
 Because we are being generic, we only need two tables. One to represent a continuous resource, and one to represent a continuous resource allocation.
 
-In the invsys directory create a subdirectory called 'models' with an __init__.py and then inside our 'models' directory we will create two new files, "continuous_resource.py" and "continuous_resource_allocation.py".
+In the `invsys` directory create a subdirectory called `models` with an `__init__.py` and then inside our `models` directory we will create two new files, `continuous_resource.py` and `continuous_resource_allocation.py`.
 
 Your invsys directory should now look like this:
 
@@ -647,6 +649,32 @@ We will have a look together now at the function for creating a new allocation, 
 
 If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
 
+If I open Postman and POST a new car instance to `127.0.0.1:5001/api/cars`, you should get a response containing the request body and the new uuid.
+
+... postman screenshot
+
+You can post an allocation:
+
+... postman screenshot
+
+This works just fine, but it assumes you have the python environment set up correctly. We can avoid this issue by running the application in a Docker container. What we need to do is create a Dockerfile, which will be used to create a docker image of our application, and then you can use docker to run the image in a container.
+
+In the `invsys` directory create a file called `Dockerfile`. Our Dockerfile will look like this:
+```
+FROM python:3.7-alpine
+COPY requirements.txt /
+RUN pip install -r /requirements.txt
+COPY . /app
+WORKDIR /app
+EXPOSE 5001
+CMD [ "python", "application.py" ]
+```
+We use `FROM python:3.7-alpine` as our base as it has the correct python version, and the `alpine` images are relatively small compared to non-alpine images (a few megabyes as opposed to a few hundred megabytes). We `COPY requirements.txt /` which makes the file available in our docker image, and then install it using `RUN pip install -r /requirements.txt`. We then copy the rest of our source code into a subdirectory called `app` with `COPY . /app`. Using `WORKDIR /app` means the next commands will be executed in that directory. We `EXPOSE 5001` to expose port 5001, which is the port defined in our `application.py`. Then finally we state the command to run the application, which is `CMD [ "python", "application.py" ]`.
+
+Now that we have a dockerfile, we can build the image using `docker build -t invsys .`, which will build an image called `invsys` based off of the Dockerfile in our current directory (`.`).
+
+Then you can deploy your application using `docker run -p 5001:5001 invsys` and target it the same way as before using Postman. The `-p 5001:5001` is for routing the docker machine port to the port of our container.
+
 ## Gateway Application
 ### Why do we need one?
 - The Gateway allows us to present a single public interface to access our microservices. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
@@ -657,4 +685,28 @@ If you run `python application.py` you should now be able to target the applicat
 We want our gateway to just route requests to our invsys service. Nothing else will be integrated, but by doing this you will see how to consume one service from another service, and when you can do it for one, you can do it for many.
 
 ### Lets do it
-...
+Inside our main project directory, create a new directory called `gateway`. `cd` into this directory. We will create another Flask application here, though it will be much simpler. Create an `application.py` again, create another fresh python environment and install Flask again. Create a `requirements.txt` again. Your overall project directory structure should look like this:
+```
+.
+├── gateway
+│   ├── application.py
+│   └── requirements.txt
+└── invsys
+    ├── Dockerfile
+    ├── application.py
+    ├── requirements.txt
+    ├── blueprints
+    │   ├── __init__.py
+    │   └── continuous_resource_blueprint.py
+    ├── daos
+    │   ├── __init__.py
+    │   └── continuous_resource_dao.py
+    ├── models
+    │   ├── __init__.py
+    │   ├── continuous_resource.py
+    │   └── continuous_resource_allocation.py
+    └── serialisers
+        ├── __init__.py
+        ├── continuous_resource_allocation_serialiser.py
+        └── continuous_resource_serialiser.py
+```
