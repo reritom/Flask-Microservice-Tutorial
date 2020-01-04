@@ -27,17 +27,13 @@ Having started writing this, I realised that I quickly start using terms which m
 - Frontend: A system which handles the direct client interactions, so this covers the UI of the webpage, which could either be presented as a SPA (single page application) or as an express app which renders html server-side.
 - Component: Backends and Frontends can both be considered as Components. Components are standalone and should be tested/testable by themselves.
 
-## When would we need to make an application like this?
-
-What we intend to make is a backend application consisting of multiple micro-services. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like firestore, dynamo, or redis (which can be used as a database).
-
 ## Context
 
 Recently I was working on a large multi component application built with many flask micro services and found difficulties throughout where even in-depth google searches couldn’t guide me to the correct answer. At the time I wasn’t considering writing a guide about it, so I didn’t make note of most of these issues, but this guide will hopefully cover all the things I wish I could have found more easily.
 
 ## What will we make?
 
-We want to develop a backend application comprised of multiple micro-services. The backend will handle database interactions and any external API integrations.
+What we intend to make is a backend application consisting of multiple micro-services. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like Firestore or Dynamo.
 
 For the purpose of this guide, we will make a simple inventory management system. Really this could be done with just a frontend and a single backend component, but we will add some additional steps to give wider coverage. I have chosen this project as it was something that developed out of the larger project I was working on and thought it would work well exposition-ally.
 
