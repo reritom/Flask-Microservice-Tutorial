@@ -887,6 +887,10 @@ We are defined two services. One for Gateway and one for Invsys. The key we use 
 
 You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip` (you might need to run `docker-machine start` first, and even `eval $(docker-machine env default)` to set your docker machine config correctly). Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
 
+With our application deployed, we can post a new car via the gateway (Note the host and port of the request)
+
+<p align="center"><img src="images/S3_gateway_post_car.png" alt="Post car through gateway Postman screenshot"></p>
+
 ## Whats next?
 Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
 
