@@ -67,7 +67,7 @@ Before starting, we should define our system to some extent and define how we ex
 
 We can describe our system with the following diagram. It allow use to clearly visualise each component and the respective links between our components.
 
-[Simple Application UML](images/S1_SimpleUML.png)
+![Simple Application UML](images/S1_SimpleUML.png)
 
 ### Basic sequence diagram:
 
@@ -660,17 +660,15 @@ If you run `python application.py` you should now be able to target the applicat
 
 If I open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, you should get a response containing the request body and the new uuid.
 
-[Post car screenshot in Postman](images/S2_invsys_post_car.png)
+![Post car screenshot in Postman](images/S2_invsys_post_car.png)
 
 We can retrieve the car using GET `127.0.0.1:5000/api/cars`
 
-[Get cars screenshot in Postman](images/S2_invsys_get_cars.png)
+![Get cars screenshot in Postman](images/S2_invsys_get_cars.png)
 
 You can post an allocation:
 
-[Post car allocation screenshot in Postman](images/S2_invsys_post_car_allocation.png)
-
-... postman screenshot
+![Post car allocation screenshot in Postman](images/S2_invsys_post_car_allocation.png)
 
 This works just fine, but it assumes you have the python environment set up correctly. We can avoid this issue by running the application in a Docker container. What we need to do is create a Dockerfile, which will be used to create a docker image of our application, and then you can use docker to run the image in a container.
 
