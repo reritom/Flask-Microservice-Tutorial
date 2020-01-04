@@ -114,16 +114,16 @@ A dummy flask app could look like the following:
 from flask import Flask, Response
 
 def create_application() -> Flask:
-  app = Flask(__name__)
+    app = Flask(__name__)
 
     app.route("/")
     def dummy():
         return Response("This is InvSys")
 
-  return app
+    return app
 
 if __name__==“__main__”:
-  app = create_application()
+    app = create_application()
     app.run(host=“127.0.0.1”, port=5000, debug=True)
 ```
 
@@ -165,10 +165,10 @@ def create_application() -> Flask:
     # Here we will create the resource instance
         return jsonify({}), 201
 
-  # Continue making routes for all the other endpoint/method combinations
-  ...
+    # Continue making routes for all the other endpoint/method combinations
+    ...
 
-  return app
+    return app
 ```
 
 If we were to do this though, our `applications.py` file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
@@ -275,7 +275,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
     # We then do this for all the other endpoints we listed
     ...
 
-		return blueprint
+    return blueprint
 ```
 
 So we have the general setup of the Flask app and the blueprints for handling our three continuous resources. You'll note that the above snippet isn't using the resource_type parameter for anything, and this is because we have been neglecting an essential part of this component.
@@ -452,7 +452,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
     # We then do this for all the other endpoints we listed
     ...
 
-		return blueprint
+    return blueprint
 ```
 If you look at the above snippet, you will see that we mention the database and models directly. For some applications this is fine, but imagine that we later decide to change what sort of database we are using. Or we change our ORM. This means all our database references in our blueprints and routes will need updating. This means our blueprints are 'coupled' with our databasing.
 
@@ -541,7 +541,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
         # Then all the other endpoints
         ...
 
-		return blueprint
+    return blueprint
 ```
 
 Ok, so we have covered the blueprints, the routing of endpoints, the databasing and daos, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
@@ -765,7 +765,7 @@ def create_application():
     def get_resources(resource_type):
         ...
 
-        return app
+    return app
 ```
 
 To forward our requests, we will use the `requests` module, which can install using `pip install requests`. Remember to add this to your `requirements.txt`.
@@ -814,7 +814,7 @@ def create_application():
         # We create a Response object by deconstructing our response from above
         return Response(response.content, response.status_code, get_proxy_headers(response))
 
-        return app
+    return app
 
 def get_proxy_headers(response) -> List[Tuple]:
 	  # A function to get the needed headers from the requests response
