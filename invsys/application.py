@@ -46,5 +46,5 @@ def create_app(db_uri: str) -> Flask:
 
 
 if __name__=="__main__":
-    app = create_app(db_uri="sqlite3://red.db")
-    app.run("127.0.0.1", 5000)
+    app = create_app(db_uri="sqlite:///red.db")
+    app.run("0.0.0.0", 5000)

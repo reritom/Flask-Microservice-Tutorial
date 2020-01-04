@@ -2,14 +2,12 @@ from flask import Blueprint, jsonify, request, abort
 from daos.continuous_resource_dao import ContinuousResourceDao
 from serialisers.continuous_resource_serialiser import ContinuousResourceSerialiser
 from serialisers.continuous_resource_allocation_serialiser import ContinuousResourceAllocationSerialiser
-from common.tools import datetime_from_string
-from blueprints.tools import AllocationError
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
     """
     blueprint_name: name of the blueprint, used by Flask for routing
     resource_type: name of the specific type of interval resource, such as boy bay or payload bay
@@ -54,7 +52,6 @@ def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: s
         """
         allocations = ContinuousResourceDao.get_resource_allocations(resource_type=resource_type, resource_id=resource_id)
         return jsonify([ContinuousResourceAllocationSerialiser.serialise(allocation) for allocation in allocations]), 200
-        
 
     @blueprint.route(f'/{resource_prefix}/<resource_id>/allocations', methods=["POST"])
     def create_resource_allocation(resource_id):

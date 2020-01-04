@@ -349,6 +349,7 @@ Your invsys directory should now look like this:
 .
 ├── application.py
 ├── requirements.txt
+├── database.py
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -466,6 +467,7 @@ Our directory now looks like this:
 .
 ├── application.py
 ├── requirements.txt
+├── database.py
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -551,6 +553,7 @@ Directory now looks like this:
 .
 ├── application.py
 ├── requirements.txt
+├── database.py
 ├── blueprints
 │   ├── __init__.py
 │   └── continuous_resource_blueprint.py
@@ -704,6 +707,7 @@ Inside our main project directory, create a new directory called `gateway`. `cd`
 └── invsys
     ├── Dockerfile
     ├── application.py
+    ├── database.py
     ├── requirements.txt
     ├── blueprints
     │   ├── __init__.py
@@ -736,4 +740,146 @@ We expect our application to receive the request from the API client, forward th
 For now, due to the minimal requirements, we will skip using Blueprints and develop directly in our `application.py`. You'll also notice that we have no need currently for any database. So no models or DAOs. We won't need serialisers because we are just forwarding responses.
 
 ### Development
+Our `application.py` can have its routes defined in the following way:
+
+```python
+# application.py
+
+from flask import Flask
+
+def create_application():
+    app = Flask(__name__)
+
+    @app.route('/api/<resource_type>', methods=['POST'])
+    def post_resource(resource_type):
+        ...
+
+    @app.route('/api/<resource_type>', methods=['GET'])
+    def get_resources(resource_type):
+        ...
+
+        return app
+```
+
+To forward our requests, we will use the `requests` module, which can install using `pip install requests`. Remember to add this to your `requirements.txt`.
+
+Looking at our `post_resource` function first, we want to take the payload from the incoming request and forward it to the instance of our `invsys`. If we have deployed `invsys` on `127.0.0.1` then we could use:
+
+```python
+import requests
+
+data = ... # from request
+resource_type = ... # from endpoint
+response = requests.post(f"127.0.0.1:5000/api/{resource_type}", data)
+```
+But by doing this, our application source code becomes coupled with how and where we deploy `invsys`. So instead, we can post to `invsys:5000/api/...` and ensure that our network is set up to route `invys -> 127.0.0.1` or to whichever ip it is hosted on.
+
+So our application can start to look like this:
+```python
+# application.py
+
+from flask import Flask, request, Response
+from typing import List, Tuple
+import json
+import requests
+
+def create_application():
+    app = Flask(__name__)
+
+    @app.route('/api/<resource_type>', methods=['POST'])
+    def post_resource(resource_type):
+        # Get the payload from our incoming request
+        payload = request.get_json(force=True)
+
+        # Forward the payload to the relevant endpoint in invsys
+        response = requests.post(f'invsys:5000/api/{resource_type}', data=json.dumps(payload))
+
+        # Forward the response back to the client
+        # We create a Response object by deconstructing our response from above
+        return Response(response.content, response.status_code, get_proxy_headers(response))
+
+    @app.route('/api/<resource_type>', methods=['GET'])
+    def get_resources(resource_type):
+        # There is no payload and no querystrings for this endpoint in invsys
+        response = requests.get(f'invsys:5000/api/{resource_type}')
+
+        # Forward the response back to the client
+        # We create a Response object by deconstructing our response from above
+        return Response(response.content, response.status_code, get_proxy_headers(response))
+
+        return app
+
+def get_proxy_headers(response) -> List[Tuple]:
+	  # A function to get the needed headers from the requests response
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [
+        (name, value)
+        for (name, value) in response.raw.headers.items()
+        if name.lower() not in excluded_headers
+    ]
+    return headers
+```
+
+And that is all there is to it for our gateway application. We will add the same Dockerfile, but expose port 5001 instead. In our application.py, and we will set port 5001 in our `if __name__=='__main__'` block.
+
+We can't simply deploy this application using just `python application.py` because you need an instance of `invsys` running, and you need your network set up to route `invsys` to the correct ip address.
+
+Fortunately, docker can help us with this.
+
+## Composing our system
+We have two flask apps. Invsys and Gateway. We want them both to be deployed, and we want Gateway to be able to send requests to Invsys using `invsys` instead of a specific IP.
+
+Docker-compose comes to the rescue. Docker-compose is a tool that allows us to define the deployment of multiple containers, and has the benefit of making each container targetable using the container name. All we need to is create a docker-compose.yaml in our main project directory, which now looks like this:
+
+```
+.
+├── docker-compose.yaml
+├── gateway
+│   ├── Dockerfile
+│   ├── application.py
+│   └── requirements.txt
+└── invsys
+    ├── Dockerfile
+    ├── application.py
+    ├── database.py
+    ├── blueprints
+    │   ├── __init__.py
+    │   └── continuous_resource_blueprint.py
+    ├── daos
+    │   ├── __init__.py
+    │   └── continuous_resource_dao.py
+    ├── models
+    │   ├── __init__.py
+    │   ├── continuous_resource.py
+    │   └── continuous_resource_allocation.py
+    ├── requirements.txt
+    └── serialisers
+        ├── __init__.py
+        ├── continuous_resource_allocation_serialiser.py
+        └── continuous_resource_serialiser.py
+```
+And our `docker-compose.yaml` looks like this:
+```
+# docker-compose.yaml
+
+version: '2'
+services:
+    gateway:
+        build: gateway
+        ports:
+            - "5001:5001"
+    invsys:
+        build: invsys
+        ports:
+            - "5000:5000"
+```
+We are defined two services. One for Gateway and one for Invsys. The key we use as the name of the service is the name used to target that service in the network. As we are naming our Invsys service as `invsys`, any requests from our application that target `invsys` will be routed to the correct ip for that service. We are using the `build` flag in each case, which means the tool will search for the `gateway` and `invsys` subdirectories and use their Dockerfiles to build the image. The port flag is the same as the one used in the `docker run` command, it routes the external docker machine port to the internally exposed port of our containers.
+
+You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip`. Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
+
+## Whats next?
+Well realistically the inventory system (invsys) would be an internal microservice consumed by some sort of booking engine.
+
 ...
+
+And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
