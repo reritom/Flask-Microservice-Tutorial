@@ -56,9 +56,7 @@ The alternative is an interval resource, which would be something like a launchp
 
 The scope of our system is for handling the booking of three different type of continuous resource, the self-driving car, lorry, and truck.
 
-We want to be able to register a new instance of each to represent when one has been added into circulation, and we want to be able to delete them to represent when they have been decommissioned.
-
-For the UI, we want a simple interface that allows us to list each type of resource, add or delete instances of the resource, list the allocations, and add or delete allocations.
+We want to be able to register a new instance of each to represent when one has been added into circulation, and we want to be able to delete them to represent when they have been decommissioned. We then want to be able to allocate and deallocate any of them.
 
 ## System definition?
 Before starting, we should define our system to some extent and define how we expect the user to be able interact with it. We do this using UML diagrams and sequence diagrams respectively.
@@ -85,9 +83,7 @@ From an internal development perspective it can be useful to see more informatio
 
 We can define the interface of our application by creating a swagger definition. A swagger definition is a file or collection of files which define the endpoints, methods, content, and responses that can be expected by interacting with our application. Swagger definitions are then use by API client while they develop the integration between their component and the application. Swagger can also be used for validation of request content and even for auto-generation of code.
 
-Our system is a basic CRUD (create, read, update, delete) app with some additional validations, so our applications swagger should be quite simple.
-
-…
+Our system is a basic CRUD (create, read, update, delete) app with some additional validations, so our applications swagger should be quite simple (Maybe I'll add this later).
 
 ## Development:
 
