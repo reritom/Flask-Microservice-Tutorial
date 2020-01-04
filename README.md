@@ -93,14 +93,15 @@ Our system is a basic CRUD (create, read, update, delete) app with some addition
 
 We will start by developing the backend and we start with the central system, which is the inventory management application, and then work outwards. If you work is an agile team, you will know this is the wrong approach. What we are doing here is called ‘horizontal slicing’, when what you would do in an agile is ‘vertical slicing’.
 
-Horizontal slicing -
-Vertical slicing -
+> Horizontal slicing is the practice of splitting development into technical layers. Such as splitting a project by frontend, backend, database layer. Horizontal slicing requires all slices to be completed before the client can use the software.
+
+> Vertical slicing is the practice of spltting by functionality. In practise this means small parts of each technical layer will be developed together, allowing functionality to be available sooner, at the sacrifice of having incomplete technical layers.
 
 So while I acknowledge that this isn’t the optimum approach, it is a much easier way to handle development from a technical perspective.
 
 So the development will goes a follows:
 
-Inventory management flask app -> API gateway application -> Frontend
+Inventory management flask app -> API gateway application -> Combined deployment
 
 ## Inventory Management App (InvSys):
 
