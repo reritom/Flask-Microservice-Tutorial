@@ -14,7 +14,7 @@ This guide will consider the development of a system comprised of multiple inter
 ### Prerequisites:
 - A python environment handler, because we will create multiple environments. I use conda, but you could also using something like venv or poetry.
 - You need to have docker installed (add link), this guide won’t cover that process because the docker documentation is very complete.
-- Some knowledge of Flask apps, sql orms, and docker. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
+- Some knowledge of Flask apps, SQL ORMs, and Docker. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
 
 ### Terminology:
 
@@ -509,10 +509,12 @@ class ContinuousResourceDao:
 And then in our blueprint, we use the DAO instead of the direct database accesses
 
 ```python
-from flask import Blueprint
+# continuous_resource_blueprint.py
+
+from flask import Blueprint, request, jsonify
 from daos.continuous_resource_dao import ContinuousResourceDao
 
-def create_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
     """
     blueprint_name: name of the blueprint, used by Flask for routing
     resource_type: name of the specific type of interval resource, such as Car
@@ -614,7 +616,11 @@ class ContinuousResourceAllocationSerialiser:
 Now in our blueprint we serialise our model instances before returning them.
 
 ```python
-from flask import Blueprint
+# continuous_resource_blueprint.py
+
+from flask import Blueprint, request, jsonify
+from daos.continuous_resource_dao import ContinuousResourceDao
+from serialisers.continuous_resource_serialiser import ContinuousResourceSerialiser
 
 def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
     """
@@ -661,6 +667,8 @@ This works just fine, but it assumes you have the python environment set up corr
 
 In the `invsys` directory create a file called `Dockerfile`. Our Dockerfile will look like this:
 ```
+# Dockerfile
+
 FROM python:3.7-alpine
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
@@ -671,7 +679,9 @@ CMD [ "python", "application.py" ]
 ```
 We use `FROM python:3.7-alpine` as our base as it has the correct python version, and the `alpine` images are relatively small compared to non-alpine images (a few megabyes as opposed to a few hundred megabytes). We `COPY requirements.txt /` which makes the file available in our docker image, and then install it using `RUN pip install -r /requirements.txt`. We then copy the rest of our source code into a subdirectory called `app` with `COPY . /app`. Using `WORKDIR /app` means the next commands will be executed in that directory. We `EXPOSE 5001` to expose port 5001, which is the port defined in our `application.py`. Then finally we state the command to run the application, which is `CMD [ "python", "application.py" ]`.
 
-Now that we have a dockerfile, we can build the image using `docker build -t invsys .`, which will build an image called `invsys` based off of the Dockerfile in our current directory (`.`).
+When you run an the application without docker, it will create a database in the invsys directory called `red.db`. Which means when you create your docker image, you will already have your database in your image with any existing data in it. So avoid this by adding a `.dockerignore` file to your directory, containing `red.db`. Now when you build your image, there will be a fresh image. For this project we aren't concerned about database persistence and volumes.
+
+Now that we have a Dockerfile (and our .dockerignore), we can build the image using `docker build -t invsys .`, which will build an image called `invsys` based off of the Dockerfile in our current directory (`.`).
 
 Then you can deploy your application using `docker run -p 5001:5001 invsys` and target it the same way as before using Postman. The `-p 5001:5001` is for routing the docker machine port to the port of our container.
 
