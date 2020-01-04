@@ -48,11 +48,11 @@ In this system we consider that have resources which relate the physical items. 
 
 Continuous resources are items that can be allocated for any duration, starting at any time, and ending at any time. An example of this could be a bookable self-driving car. It is a continuous resource because when it is booked for a journey, it be for any duration.
 
-… timeline showing continuous resource allocations
+![Continuous Resource](images/S1_Continuous.png)
 
 The alternative is an interval resource, which would be something like a launchpad or a runway, which may have discrete defined intervals for when they can be booked. Note that in any case, there can’t be any overlap of the allocations made on a resource.
 
-… timeline showing interval resource windows and allocations
+![Interval Resource](images/S1_Interval.png)
 
 The scope of our system is for handling the booking of three different type of continuous resource, the self-driving car, lorry, and truck.
 
