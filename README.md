@@ -48,11 +48,11 @@ In this system we consider that have resources which relate the physical items. 
 
 Continuous resources are items that can be allocated for any duration, starting at any time, and ending at any time. An example of this could be a bookable self-driving car. It is a continuous resource because when it is booked for a journey, it be for any duration.
 
-<p align="center"><img src="images/S1_Continuous.png" alt="alternate text"></p>
+<p align="center"><img src="images/S1_Continuous.png" alt="Continuous Resource"></p>
 
 The alternative is an interval resource, which would be something like a launchpad or a runway, which may have discrete defined intervals for when they can be booked. Note that in any case, there can’t be any overlap of the allocations made on a resource.
 
-![Interval Resource](images/S1_Interval.png)
+<p align="center"><img src="images/S1_Interval.png" alt="Interval Resource"></p>
 
 The scope of our system is for handling the booking of three different type of continuous resource, the self-driving car, lorry, and truck.
 
@@ -67,7 +67,7 @@ Before starting, we should define our system to some extent and define how we ex
 
 We can describe our system with the following diagram. It allows us to clearly visualise each component and the respective links between our components. The UML doesn't state anything about the content of the interfaces.
 
-![Simple Application UML](images/S1_SimpleUML.png)
+<p align="center"><img src="images/S1_SimpleUML.png" alt="Simple Application UML"></p>
 
 ### Basic sequence diagram:
 
@@ -666,15 +666,15 @@ If you run `python application.py` you should now be able to target the applicat
 
 If I open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, you should get a response containing the request body and the new uuid.
 
-![Post car screenshot in Postman](images/S2_invsys_post_car.png)
+<p align="center"><img src="images/S2_invsys_post_car.png" alt="Post car screenshot in Postman"></p>
 
 We can retrieve the car using GET `127.0.0.1:5000/api/cars`
 
-![Get cars screenshot in Postman](images/S2_invsys_get_cars.png)
+<p align="center"><img src="images/S2_invsys_get_cars.png" alt="Get cars screenshot in Postman"></p>
 
 You can post an allocation:
 
-![Post car allocation screenshot in Postman](images/S2_invsys_post_car_allocation.png)
+<p align="center"><img src="images/S2_invsys_post_car_allocation.png" alt="Post car allocation screenshot in Postman"></p>
 
 This works just fine, but it assumes you have the python environment set up correctly. We can avoid this issue by running the application in a Docker container. What we need to do is create a Dockerfile, which will be used to create a docker image of our application, and then you can use docker to run the image in a container.
 
@@ -890,9 +890,9 @@ You can now deploy the application by running `docker-compose up`. Using docker-
 ## Whats next?
 Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
 
-![Future Application Admin UML](images/S3_FutureUML_Admin.png)
+<p align="center"><img src="images/S3_FutureUML_Admin.png" alt="Future Application Admin UML"></p>
 
-![Future Application User UML](images/S3_FutureUML_User.png)
+<p align="center"><img src="images/S3_FutureUML_User.png" alt="Future Application User UML"></p>
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
 
