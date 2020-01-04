@@ -5,7 +5,7 @@ Typically I skip any guide that requires me to make external accounts or has any
 This guide will consider the development of a system comprised of multiple intercommunicating micro-services. The stack of this application is one of personal preference, but there are any number of different variations, so check out the stack below before we go into further detail.
 
 ### Stack used in this guide:
-- Flask backends (But you could use NodeJS with express)
+- Flask backends
 - SQLite3 with flask SQL Alchemy
 - Docker
 - Docker-compose
@@ -29,7 +29,7 @@ Having started writing this, I realised that I quickly start using terms which m
 
 ## When would we need to make an application like this?
 
-What we intend to make is a backend application consisting of multiple microservices. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like dynamo or redis (which can be used as a database).
+What we intend to make is a backend application consisting of multiple micro-services. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like firestore, dynamo, or redis (which can be used as a database).
 
 ## Context
 
@@ -37,13 +37,13 @@ Recently I was working on a large multi component application built with many fl
 
 ## What will we make?
 
-Well, let's cover a full stack scenario. This means we want a frontend that handles interactions with the user, including rendering the webpages in a simple and pretty way. We want a backend that handles any business logic. The backend will handle database interactions and any external API integrations.
+We want to develop a backend application comprised of multiple micro-services. The backend will handle database interactions and any external API integrations.
 
 For the purpose of this guide, we will make a simple inventory management system. Really this could be done with just a frontend and a single backend component, but we will add some additional steps to give wider coverage. I have chosen this project as it was something that developed out of the larger project I was working on and thought it would work well exposition-ally.
 
 The additional step will be an API gateway backend which is a sort of router and authoriser of the client requests. This means our ‘application’ will consist of two backend components, one being the inventory manager, and one being the api gateway, and there will also be a frontend component. The application will expose a RESTful interface (we will get to this) which is to be consumed by the frontend
 
-What is the scope of the inventory management system?
+### What is the scope of the inventory management system?
 In this system we consider that have resources which relate the physical items. The resources should be able to be allocated for arbitrary durations. In this case, we will only consider one type of resource, continuous resources.
 
 Continuous resources are items that can be allocated for any duration, starting at any time, and ending at any time. An example of this could be a bookable self-driving car. It is a continuous resource because when it is booked for a journey, it be for any duration.
@@ -770,9 +770,9 @@ import requests
 
 data = ... # from request
 resource_type = ... # from endpoint
-response = requests.post(f"127.0.0.1:5000/api/{resource_type}", data)
+response = requests.post(f"http://127.0.0.1:5000/api/{resource_type}", data)
 ```
-But by doing this, our application source code becomes coupled with how and where we deploy `invsys`. So instead, we can post to `invsys:5000/api/...` and ensure that our network is set up to route `invys -> 127.0.0.1` or to whichever ip it is hosted on.
+But by doing this, our application source code becomes coupled with how and where we deploy `invsys`. So instead, we can post to `http://invsys:5000/api/...` and ensure that our network is set up to route `invys -> 127.0.0.1` or to whichever ip it is hosted on.
 
 So our application can start to look like this:
 ```python
@@ -792,7 +792,7 @@ def create_application():
         payload = request.get_json(force=True)
 
         # Forward the payload to the relevant endpoint in invsys
-        response = requests.post(f'invsys:5000/api/{resource_type}', data=json.dumps(payload))
+        response = requests.post(f'http://invsys:5000/api/{resource_type}', data=json.dumps(payload))
 
         # Forward the response back to the client
         # We create a Response object by deconstructing our response from above
@@ -801,7 +801,7 @@ def create_application():
     @app.route('/api/<resource_type>', methods=['GET'])
     def get_resources(resource_type):
         # There is no payload and no querystrings for this endpoint in invsys
-        response = requests.get(f'invsys:5000/api/{resource_type}')
+        response = requests.get(f'http://invsys:5000/api/{resource_type}')
 
         # Forward the response back to the client
         # We create a Response object by deconstructing our response from above
@@ -875,10 +875,10 @@ services:
 ```
 We are defined two services. One for Gateway and one for Invsys. The key we use as the name of the service is the name used to target that service in the network. As we are naming our Invsys service as `invsys`, any requests from our application that target `invsys` will be routed to the correct ip for that service. We are using the `build` flag in each case, which means the tool will search for the `gateway` and `invsys` subdirectories and use their Dockerfiles to build the image. The port flag is the same as the one used in the `docker run` command, it routes the external docker machine port to the internally exposed port of our containers.
 
-You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip`. Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
+You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip` (you might need to run `docker-machine start` first, and even `eval $(docker-machine env default)` to set your docker machine config correctly). Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
 
 ## Whats next?
-Well realistically the inventory system (invsys) would be an internal microservice consumed by some sort of booking engine.
+Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine.
 
 ...
 

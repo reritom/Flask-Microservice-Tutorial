@@ -3,6 +3,7 @@ from daos.continuous_resource_dao import ContinuousResourceDao
 from serialisers.continuous_resource_serialiser import ContinuousResourceSerialiser
 from serialisers.continuous_resource_allocation_serialiser import ContinuousResourceAllocationSerialiser
 import json
+import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -68,14 +69,14 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
         from_infinity = data.get('from_infinity', False)
         from_datetime = (
-            datetime_from_string(data['from_datetime'])
+            datetime.datetime.strptime(data['from_datetime'], "%Y-%m-%dT%H:%M:%S")
             if 'from_datetime' in data
             else None
         )
 
         to_infinity = data.get('to_infinity', False)
         to_datetime = (
-            datetime_from_string(data['to_datetime'])
+            datetime.datetime.strptime(data['to_datetime'], "%Y-%m-%dT%H:%M:%S")
             if 'to_datetime' in data
             else None
         )

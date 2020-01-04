@@ -3,8 +3,8 @@ services:
     gateway:
         build: gateway
         ports:
-            - "5000:5000"
+            - "5001:5001"
     invsys:
         build: invsys
         ports:
-            - "5001:5001"
+            - "5000:5000"

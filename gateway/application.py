@@ -12,7 +12,7 @@ def create_application() -> Flask:
         payload = request.get_json(force=True)
 
         # Forward the payload to the relevant endpoint in invsys
-        response = requests.post(f'invsys:5000/api/{resource_type}', data=json.dumps(payload))
+        response = requests.post(f'http://invsys:5000/api/{resource_type}', data=json.dumps(payload))
 
         # Forward the response back to the client
         # We create a Response object by deconstructing our response from above
@@ -21,7 +21,7 @@ def create_application() -> Flask:
     @app.route('/api/<resource_type>', methods=['GET'])
     def get_resources(resource_type):
         # There is no payload and no querystrings for this endpoint in invsys
-        response = requests.get(f'invsys:5000/api/{resource_type}')
+        response = requests.get(f'http://invsys:5000/api/{resource_type}')
 
         # Forward the response back to the client
         # We create a Response object by deconstructing our response from above
@@ -41,4 +41,4 @@ def get_proxy_headers(response) -> List[Tuple]:
 
 if __name__=="__main__":
     app = create_application()
-    app.run("0.0.0.0", 5001)
+    app.run("0.0.0.0", port=5001, debug=True)
