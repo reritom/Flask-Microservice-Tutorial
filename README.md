@@ -67,7 +67,7 @@ Before starting, we should define our system to some extent and define how we ex
 
 We can describe our system with the following diagram. It allow use to clearly visualise each component and the respective links between our components.
 
-…
+[Simple Application UML](images/S1_SimpleUML.png)
 
 ### Basic sequence diagram:
 
@@ -658,11 +658,17 @@ We will have a look together now at the function for creating a new allocation, 
 
 If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
 
-If I open Postman and POST a new car instance to `127.0.0.1:5001/api/cars`, you should get a response containing the request body and the new uuid.
+If I open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, you should get a response containing the request body and the new uuid.
 
-... postman screenshot
+[Post car screenshot in Postman](images/S2_invsys_post_car.png)
+
+We can retrieve the car using GET `127.0.0.1:5000/api/cars`
+
+[Get cars screenshot in Postman](images/S2_invsys_get_cars.png)
 
 You can post an allocation:
+
+[Post car allocation screenshot in Postman](images/S2_invsys_post_car_allocation.png)
 
 ... postman screenshot
 
@@ -880,6 +886,6 @@ You can now deploy the application by running `docker-compose up`. Using docker-
 ## Whats next?
 Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine.
 
-...
+![Future Application UML](images/S3_FutureUML.png)
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
