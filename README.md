@@ -890,7 +890,9 @@ You can now deploy the application by running `docker-compose up`. Using docker-
 ## Whats next?
 Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
 
-![Future Application UML](images/S3_FutureUML.png)
+![Future Application Admin UML](images/S3_FutureUML_Admin.png)
+
+![Future Application User UML](images/S3_FutureUML_User.png)
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
 
