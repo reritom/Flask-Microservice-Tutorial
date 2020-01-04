@@ -65,7 +65,7 @@ Before starting, we should define our system to some extent and define how we ex
 
 ### UML:
 
-We can describe our system with the following diagram. It allow use to clearly visualise each component and the respective links between our components.
+We can describe our system with the following diagram. It allows us to clearly visualise each component and the respective links between our components. The UML doesn't state anything about the content of the interfaces.
 
 ![Simple Application UML](images/S1_SimpleUML.png)
 
