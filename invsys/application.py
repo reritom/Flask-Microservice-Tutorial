@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from database import db
-from blueprints.continuous_resource_blueprint import create_blueprint as create_continuous_resource_blueprint
+from blueprints.continuous_resource_blueprint import create_continuous_resource_blueprint
 import os
 import logging
 

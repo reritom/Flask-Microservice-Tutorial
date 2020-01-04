@@ -720,3 +720,20 @@ Inside our main project directory, create a new directory called `gateway`. `cd`
         ├── continuous_resource_allocation_serialiser.py
         └── continuous_resource_serialiser.py
 ```
+
+So again, before developing the application, lets define it a bit further.
+
+### Definition
+For demonstration purposes, we will only handle two of the `invsys` endpoints for routing. So our application will accept requests to:
+
+- POST /api/{resource_type}
+- GET /api/{resource_type}
+
+We expect our application to receive the request from the API client, forward the payload or query strings to `invsys`, then forward the response from `invsys` back to the API client.
+
+... flow diagram
+
+For now, due to the minimal requirements, we will skip using Blueprints and develop directly in our `application.py`. You'll also notice that we have no need currently for any database. So no models or DAOs. We won't need serialisers because we are just forwarding responses.
+
+### Development
+...
