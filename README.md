@@ -887,8 +887,11 @@ With our application deployed, we can post a new car via the gateway (Note the h
 ## Whats next?
 Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
 
+
+Showing a potential admin flow:
 <p align="center"><img src="images/S3_FutureUML_Admin.png" alt="Future Application Admin UML"></p>
 
+Showing a potential user flow:
 <p align="center"><img src="images/S3_FutureUML_User.png" alt="Future Application User UML"></p>
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
