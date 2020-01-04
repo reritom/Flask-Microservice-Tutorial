@@ -277,6 +277,8 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     # We then do this for all the other endpoints we listed
     ...
+
+		return blueprint
 ```
 
 So we have the general setup of the Flask app and the blueprints for handling our three continuous resources. You'll note that the above snippet isn't using the resource_type parameter for anything, and this is because we have been neglecting an essential part of this component.
@@ -452,6 +454,8 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
     # We then do this for all the other endpoints we listed
     ...
+
+		return blueprint
 ```
 If you look at the above snippet, you will see that we mention the database and models directly. For some applications this is fine, but imagine that we later decide to change what sort of database we are using. Or we change our ORM. This means all our database references in our blueprints and routes will need updating. This means our blueprints are 'coupled' with our databasing.
 
@@ -506,7 +510,7 @@ class ContinuousResourceDao:
         return ContinuousResource.query.filter_by(resource_type=resource_type)
 
     # There will be more functions for each other query
-        ...
+    ...
 ```
 And then in our blueprint, we use the DAO instead of the direct database accesses
 
@@ -516,7 +520,7 @@ And then in our blueprint, we use the DAO instead of the direct database accesse
 from flask import Blueprint, request, jsonify
 from daos.continuous_resource_dao import ContinuousResourceDao
 
-def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str):
+def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str, resource_prefix: str) -> Blueprint:
     """
     blueprint_name: name of the blueprint, used by Flask for routing
     resource_type: name of the specific type of interval resource, such as Car
@@ -539,6 +543,8 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
         # Then all the other endpoints
         ...
+
+		return blueprint
 ```
 
 Ok, so we have covered the blueprints, the routing of endpoints, the databasing and daos, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
@@ -882,8 +888,14 @@ We are defined two services. One for Gateway and one for Invsys. The key we use 
 You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip` (you might need to run `docker-machine start` first, and even `eval $(docker-machine env default)` to set your docker machine config correctly). Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
 
 ## Whats next?
-Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine.
+Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
 
 ![Future Application UML](images/S3_FutureUML.png)
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
+
+### Other things to consider
+This guide has glossed over a few things:
+- Each backend should be unit tested.
+- There are plenty of Flask frameworks that handle serialisation more implicitly by looking at the models and handling the serialisation automatically.
+- Pretty much every decision made in this guide could have been made in a different way with the same end result.
