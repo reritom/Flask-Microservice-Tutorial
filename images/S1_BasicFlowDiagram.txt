@@ -1,0 +1,8 @@
+title Basic Flow
+
+note over API Client: Create a new resource
+API Client->Application: POST /{resource_type (cars)}
+Application-->API Client: New resource with id
+note over API Client: Create an allocation for \nthis new resource
+API Client->Application: POST /cars/<id>/allocations
+Application-->API Client: New allocation

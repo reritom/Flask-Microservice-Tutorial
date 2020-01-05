@@ -1,0 +1,21 @@
+title Technical Flow
+
+actor API Client
+participant Gateway
+participant InvSys
+database Database
+
+note over API Client: Create a new resource
+API Client->Gateway: POST /{resource_type (cars)}
+Gateway->InvSys: POST /{resource_type}
+InvSys->Database: Create Resource
+Database-->InvSys: New Resource
+InvSys-->Gateway: JSON Resource with id
+Gateway-->API Client: JSON Resource with id
+note over API Client: Now to create an allocation \nfor this resource
+API Client->Gateway: POST /cars/<id>/allocations
+Gateway->InvSys: POST /cars/<id>/allocations
+InvSys->Database: Create Allocation
+Database-->InvSys: New Allocation
+InvSys-->Gateway: JSON Allocation
+Gateway-->API Client: JSON Allocation

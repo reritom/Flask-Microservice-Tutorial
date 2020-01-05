@@ -67,13 +67,13 @@ We can describe our system with the following diagram. It allows us to clearly v
 
 We can describe how the API client interacts with our system using the sequence diagram below. Note that any internal complexities are hidden, all we care about it how the API client interacts with the application
 
-…
+<p align="center"><img src="images/S1_BasicFlowDiagram.png" alt="Basic Sequence Diagram"></p>
 
 ### Advanced sequence diagram:
 
 From an internal development perspective it can be useful to see more information that doesn’t need to be exposed to the API client, we can do that with the following diagram
 
-…
+<p align="center"><img src="images/S1_TechnicalFlowDiagram.png" alt="Technical Sequence Diagram"></p>
 
 ### Swagger:
 
@@ -454,11 +454,11 @@ If you look at the above snippet, you will see that we mention the database and 
 
 The second approach attempts to decouple the blueprints from the by using a concept know as DAOs (data access objects) or DALs (data access layers).
 
-We will create a DAO which will be used to handle any related databasing for continous resources (including allocations). The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
+We will create a DAO which will be used to handle any related databasing for continuous resources (including allocations). The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
 
 Perhaps you are thinking, "Why would you need to migrate databases?". Well, for now our models are sufficient. But imagine that it turns out our API clients like to dump large amounts of json in our allocation 'json_dump' column, and perhaps in the future they might want to be able to retrieve allocations based on certain data in that column. In that case, it might make sense to change our database from SQL to something like MongoDB which handles json more natively. Our DAO gives us the flexibility to adapt to how our service is consumed with no real additional development cost.
 
-In invsys we will create a new directory called 'daos' with an __init__.py, then a dao file 'continuous_resource_dao.py'.
+In `invsys` we will create a new directory called `daos` with an `__init__.py`, and then a dao file called `continuous_resource_dao.py`.
 
 Our directory now looks like this:
 
