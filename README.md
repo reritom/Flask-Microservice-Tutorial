@@ -376,7 +376,7 @@ class ContinuousResource(db.Model):
     allocations = db.relationship("ContinuousResourceAllocation", back_populates="resource", lazy=True)
 ```
 
-Now we look at the 'continuous_resource_allocation.py'. We can define a ContinuousResourceAllocation as an object with a from_datetime, and a to_datetime. Then in some cases, the allocation might want to be considered as from infinity or to infinity, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it unallocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
+Now we look at the `continuous_resource_allocation.py`. We can define a ContinuousResourceAllocation as an object with a from_datetime, and a to_datetime. Then in some cases, the allocation might want to be considered as from infinity or to infinity, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it un-allocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
 
 To finalise the relationship between the two models, we pass the resource_id of the related ContinuousResource as a ForeignKey column, and then make the 'resource' relationship.
 
@@ -417,7 +417,7 @@ Well our blueprint doesn't actually do anything yet, it just defines our endpoin
 
 Lets look at the first way where in our blueprint, we consume the models and database directly.
 
-Our 'continuous_resource_blueprint.py' could start to look like this (Note: we aren't returning anything yet from our endpoint functions, we'll get to that):
+Our `continuous_resource_blueprint.py` could start to look like this (Note: we aren't returning anything yet from our endpoint functions, we'll get to that):
 
 ```python
 from flask import Blueprint
@@ -455,6 +455,8 @@ If you look at the above snippet, you will see that we mention the database and 
 The second approach attempts to decouple the blueprints from the by using a concept know as DAOs (data access objects) or DALs (data access layers).
 
 We will create a DAO which will be used to handle any related databasing for continous resources (including allocations). The DAO will encapsulate the database logic. Therefore if we want to migrate database, we just need to update the DAO and nothing that consumes the DAO will need to be touched.
+
+Perhaps you are thinking, "Why would you need to migrate databases?". Well, for now our models are sufficient. But imagine that it turns out our API clients like to dump large amounts of json in our allocation 'json_dump' column, and perhaps in the future they might want to be able to retrieve allocations based on certain data in that column. In that case, it might make sense to change our database from SQL to something like MongoDB which handles json more natively. Our DAO gives us the flexibility to adapt to how our service is consumed with no real additional development cost.
 
 In invsys we will create a new directory called 'daos' with an __init__.py, then a dao file 'continuous_resource_dao.py'.
 
@@ -540,9 +542,11 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
     return blueprint
 ```
 
-Ok, so we have covered the blueprints, the routing of endpoints, the databasing and daos, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
+You might be thinking, "What is the point of creating a DAO to decouple the database layer from the routes, if you then return from the DAO an object coupled with the database?". Its a valid question, our DAO returns model instances (or lists thereof), which means we technically haven't decoupled. Fortunately, the objects that we return have the same interface as any custom one we would make, so for now this doesn't cause any issues. In the future, if you were to decide that you wanted to use MongoDB, then you would need to have your DAO spawn intermediate objects with the same interface, but this shouldn't affect anything that consumes the DAO.
 
-We can't directly return these objects in our API. Our API returns json. So instead we can create dictionary representations of these objects, and allow flask to return them as json using the jsonify function. So each object needs serialiser.
+Ok, so we have covered the blueprints, the routing of endpoints, the databasing and DAOs, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
+
+We can't directly return these objects in our API. Our API returns json. So instead we can create dictionary representations of these objects, and allow flask to return them as json using the `jsonify` function. So each object needs serialiser.
 
 We can create a new directory called `serialisers` with an `__init__.py`, and we will create a serialiser for each model. So we create `continuous_resource_serialiser.py` and `continuous_resource_allocation_serialiser.py`.
 
@@ -569,7 +573,7 @@ Directory now looks like this:
     └── continuous_resource_serialiser.py
 ```
 
-The serialiser takes an instance of the object and returns a dictionary with serialisable data types. So in our serialisers we need to convert datetimes into strings else we will encounter problems using jsonify. Note as our 'serialisers' are returning dictionaries, they aren't serialisers in the truest form.
+The serialiser takes an instance of the object and returns a dictionary with serialisable data types. So in our serialisers we need to convert `datetimes` into `strings` else we will encounter problems using `jsonify`. Note as our 'serialisers' are returning dictionaries, they aren't serialisers in the truest form. There are some modules for Flask that can be used to define Serialiser classes based on the Model classes, but this doesn't work very well with the flexibility of our DAO. It also couples the database objects with their external representation, which is something to avoid.
 
 ```python
 # continuous_resource_serialiser.py
