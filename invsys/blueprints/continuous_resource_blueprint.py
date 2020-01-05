@@ -67,6 +67,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 
         data = request.get_json(force=True)
 
+        # Take the four nullable characteristics and put them into the correct formats
         from_infinity = data.get('from_infinity', False)
         from_datetime = (
             datetime.datetime.strptime(data['from_datetime'], "%Y-%m-%dT%H:%M:%S")
@@ -85,6 +86,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
         existing_allocations = [allocation for allocation in resource.allocations]
         existing_allocations.sort(key=lambda allocation: allocation.to_datetime if allocation.to_datetime else allocation.from_datetime)
 
+        # We can't create an allocation from infinity to infinity if there are existing allocations
         if to_infinity and from_infinity and existing_allocations:
             logger.debug("Aborting, there are existing allocations and an infinite request")
             abort(406)

@@ -569,7 +569,7 @@ Directory now looks like this:
     └── continuous_resource_serialiser.py
 ```
 
-The serialiser takes an instance of the object and returns a dictionary with serialisable data types. So in our serialisers we need to convert datetimes into strings else we will encounter problems using jsonify.
+The serialiser takes an instance of the object and returns a dictionary with serialisable data types. So in our serialisers we need to convert datetimes into strings else we will encounter problems using jsonify. Note as our 'serialisers' are returning dictionaries, they aren't serialisers in the truest form.
 
 ```python
 # continuous_resource_serialiser.py
@@ -653,11 +653,33 @@ You'll need to fill in the blanks for all the other endpoints I've glossed other
 
 We will have a look together now at the function for creating a new allocation, because this function needs to validate that the allocation can be made.
 
-...
+For creating allocations we will have a route resembling:
 
-If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
+```python
+@blueprint.route(f'/{resource_type}/<resource_id>/allocations')
+def create_allocation(resource_id):
+    ...
+```
 
-If I open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, you should get a response containing the request body and the new uuid.
+In this `create_allocation` function, we should have the characteristics of the allocation in the payload body, and what we intend to do is disqualify the allocation. Our function will check conditions to see if we can reject this request due to overlaps or other conditions, and if we fail to disqualify it, we will then create the allocation record.
+
+```python
+@blueprint.route(f'/{resource_type}/<resource_id>/allocations')
+def create_allocation(resource_id):
+    # Clean the inputs
+
+    # Get all existing allocations related to this resource id
+
+    # Check each existing allocation and if there is overlap, reject this request
+
+    # Create the allocation if it passed the above checks
+```
+
+So written like that, it is quite clear what we have to do. But when we consider that our allocation is defined by four nullable values, it means our function will end up being quite long consisting our multiple if-elif-else statements. I won't put the actual function in the guide, but you can look at it in `continuous_resource_blueprint.py`.
+
+Assuming you have created everything we've mentioned above and filled in the blanks, or that you have cloned the repository. If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
+
+If you open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, you should get a response containing the request body and the new uuid.
 
 <p align="center"><img src="images/S2_invsys_post_car.png" alt="Post car screenshot in Postman"></p>
 
@@ -693,9 +715,9 @@ Then you can deploy your application using `docker run -p 5001:5001 invsys` and 
 
 ## Gateway Application
 ### Why do we need one?
-- The Gateway allows us to present a single public interface to access our microservices. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
-- Another benefit is to orchestrate the authentication and authorisation of requests. Authentication is typically handled by an external system, but then the Gateway will communicate with that system to confirm requests are authorised before internally routing them to the correct microservices.
-- The Gateway can also handle authorisation, which is determining whether requests have permissions to access certain resources. In many cases, like the invsys system we developed above, in our service we don't take into consideration which client is consuming the service. By making our services client-agnostic, we allow them to focus on their specific purpose which makes them more maintainable, more discrete, and more reusable. So our Gateway can then integrate middleware that determines which resources belong to which clients, which itself might done by integrating another microservice for handling client accounts and resources.
+- The Gateway allows us to present a single public interface to access our micro-services. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
+- Another benefit is to orchestrate the authentication and authorisation of requests. Authentication is typically handled by an external system, but then the Gateway will communicate with that system to confirm requests are authorised before internally routing them to the correct micro-services.
+- The Gateway can also handle authorisation, which is determining whether requests have permissions to access certain resources. In many cases, like the `invsys` system we developed above, in our service we don't take into consideration which client is consuming the service. By making our services client-agnostic, we allow them to focus on their specific purpose which makes them more maintainable, more discrete, and more reusable. So our Gateway can then integrate middleware that determines which resources belong to which clients, which itself might done by integrating another micro-service for handling client accounts and resources.
 
 ### What will ours do?
 We want our gateway to just route requests to our invsys service. Nothing else will be integrated, but by doing this you will see how to consume one service from another service, and when you can do it for one, you can do it for many.
