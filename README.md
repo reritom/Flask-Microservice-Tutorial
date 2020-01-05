@@ -156,9 +156,9 @@ from flask import Flask, jsonify
 def create_application() -> Flask:
     app = Flask(__name__)
 
-    app.route("/<resource_type>", methods=['POST'])
+    @app.route("/<resource_type>", methods=['POST'])
     def create_resource_instance(resource_type):
-    # Here we will create the resource instance
+        # Here we will create the resource instance
         return jsonify({}), 201
 
     # Continue making routes for all the other endpoint/method combinations
@@ -216,7 +216,7 @@ def create_application() -> Flask:
     app.register_blueprint(continuous_resource_blueprint)
     return app
 ```
-While this would work just fine, you'd need to somewhere define acceptable resource_types, either in the environment for flexibility, or in some config.
+While this would work just fine, you'd need to somewhere define acceptable resource types, either in the environment for flexibility, or in some config.
 
 If we know that the resource types are unlikely to change, then it would be nice for them to be clearly stated in the `application.py`. One way to do that would be using creating Blueprints using a function which states the resource type using closures.
 

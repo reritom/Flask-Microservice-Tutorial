@@ -135,6 +135,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
                     logger.debug("To datetime overlaps with an existing allocation")
                     abort(406)
 
+        # This allocation hasn't be disqualified, so we will make it
         allocation = ContinuousResourceDao.create_resource_allocation(
             resource_type=resource_type,
             resource_id=resource_id,
