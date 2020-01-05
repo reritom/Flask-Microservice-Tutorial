@@ -656,16 +656,16 @@ We will have a look together now at the function for creating a new allocation, 
 For creating allocations we will have a route resembling:
 
 ```python
-@blueprint.route(f'/{resource_type}/<resource_id>/allocations')
-def create_allocation(resource_id):
+@blueprint.route(f'/{resource_type}/<resource_id>/allocations', methods=['POST'])
+def create_resource_allocation(resource_id):
     ...
 ```
 
-In this `create_allocation` function, we should have the characteristics of the allocation in the payload body, and what we intend to do is disqualify the allocation. Our function will check conditions to see if we can reject this request due to overlaps or other conditions, and if we fail to disqualify it, we will then create the allocation record.
+In this `create_resource_allocation` function, we should have the characteristics of the allocation in the payload body, and what we intend to do is disqualify the allocation. Our function will check conditions to see if we can reject this request due to overlaps or other conditions, and if we fail to disqualify it, we will then create the allocation record.
 
 ```python
-@blueprint.route(f'/{resource_type}/<resource_id>/allocations')
-def create_allocation(resource_id):
+@blueprint.route(f'/{resource_type}/<resource_id>/allocations', methods=['POST'])
+def create_resource_allocation(resource_id):
     # Clean the inputs
 
     # Get all existing allocations related to this resource id
@@ -673,9 +673,10 @@ def create_allocation(resource_id):
     # Check each existing allocation and if there is overlap, reject this request
 
     # Create the allocation if it passed the above checks
+    ...
 ```
 
-So written like that, it is quite clear what we have to do. But when we consider that our allocation is defined by four nullable values, it means our function will end up being quite long consisting our multiple if-elif-else statements. I won't put the actual function in the guide, but you can look at it in `continuous_resource_blueprint.py`.
+So written like that, it is quite clear what we have to do. But when we consider that our allocation is defined by four nullable values, it means our function will end up being quite long consisting our multiple if-elif-else statements. I won't put the actual function here, but you can look at it in `continuous_resource_blueprint.py`.
 
 Assuming you have created everything we've mentioned above and filled in the blanks, or that you have cloned the repository. If you run `python application.py` you should now be able to target the application to create resources and allocations with populated responses.
 
