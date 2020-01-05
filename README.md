@@ -12,9 +12,11 @@ This guide will consider the development of a system comprised of multiple inter
 - Postman
 
 ### Prerequisites:
-- A python environment handler, because we will create multiple environments. I use conda, but you could also using something like venv or poetry.
-- You need to have docker installed (add link), this guide won’t cover that process because the docker documentation is very complete.
-- Some knowledge of Flask apps, SQL ORMs, and Docker. In a lot of cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
+- A python environment handler, because we will create multiple environments. I use Conda, but you could also using something like venv or poetry.
+- You need to have docker installed, this guide won’t cover that process because the [docker documentation](https://https://docs.docker.com/install/) is very complete.
+- Some knowledge of Flask apps, SQL ORMs, and Docker.
+
+In most cases I will go through examples assuming some prior knowledge, but in those cases I will link to external resources that cover them in more detail if relevant.
 
 ### Terminology:
 
@@ -23,8 +25,8 @@ Having started writing this, I realised that I quickly start using terms which m
 - Client: The end-user who consumes the UI in their browser
 - API Client: Anything which consumes an API (internal or external)
 - Backend: A backend is any system which exposes an API to be consumed. It could be a simple Flask app, or an express app, or any many other things which aren’t necessarily HTTP servers.
-- Application: An application is a collection of backends which work together.
-- Frontend: A system which handles the direct client interactions, so this covers the UI of the webpage, which could either be presented as a SPA (single page application) or as an express app which renders html server-side.
+- Application: An application is a collection of backends which work together, or it can refer to individual Flask apps.
+- Frontend: A system which handles the direct client interactions, so this covers the UI (like a webapp or a mobile app).
 - Component: Backends and Frontends can both be considered as Components. Components are standalone and should be tested/testable by themselves.
 
 ## Context
@@ -33,16 +35,16 @@ Recently I was working on a large multi component application built with many fl
 
 ## What will we make?
 
-What we intend to make is a backend application consisting of multiple micro-services. Typically one can find guides showing someone how to make any individual section of this guide, and typically they would use a different stack including more javascript based backends, or using databases like Firestore or Dynamo.
+What we intend to make is a backend application consisting of multiple micro-services. Typically, one can find guides showing someone how to make any individual section of this guide, and normally, they would use a different stack including more javascript based backends, or using databases like Firestore or Dynamo.
 
-For the purpose of this guide, we will make a simple inventory management system. Really this could be done with just a frontend and a single backend component, but we will add some additional steps to give wider coverage. I have chosen this project as it was something that developed out of the larger project I was working on and thought it would work well exposition-ally.
+For the purpose of this guide, we will make a simple inventory management system. Really, this could be done with just a single backend component, but we will add some additional steps to give wider coverage. I have chosen this project as it was something that developed out of the larger project I was working on and thought it would work well exposition-ally.
 
-The additional step will be an API gateway backend which is a sort of router and authoriser of the client requests. This means our ‘application’ will consist of two backend components, one being the inventory manager, and one being the api gateway, and there will also be a frontend component. The application will expose a RESTful interface (we will get to this) which is to be consumed by the frontend
+The additional step will be an API gateway backend which is a sort of router and authoriser of the client requests. This means our ‘application’ will consist of two backend components, one being the inventory manager, and one being the api gateway. The application will expose a RESTful interface (we will get to this).
 
 ### What is the scope of the inventory management system?
-In this system we consider that have resources which relate the physical items. The resources should be able to be allocated for arbitrary durations. In this case, we will only consider one type of resource, continuous resources.
+In this system, we consider that we have resources which relate the physical items. The resources should be able to be allocated for arbitrary durations. In this case, we will only consider one type of resource, continuous resources.
 
-Continuous resources are items that can be allocated for any duration, starting at any time, and ending at any time. An example of this could be a bookable self-driving car. It is a continuous resource because when it is booked for a journey, it be for any duration.
+Continuous resources are items that can be allocated for any duration, starting at any time, and ending at any time. An example of this could be a bookable self-driving car. It is a continuous resource because when it is booked for a journey, it can be for any duration.
 
 <p align="center"><img src="images/S1_Continuous.png" alt="Continuous Resource"></p>
 
@@ -71,7 +73,7 @@ We can describe how the API client interacts with our system using the sequence 
 
 ### Advanced sequence diagram:
 
-From an internal development perspective it can be useful to see more information that doesn’t need to be exposed to the API client, we can do that with the following diagram
+From an internal development perspective it can be useful to see more information that doesn’t need to be exposed to the API client, we can do that with the following diagram:
 
 <p align="center"><img src="images/S1_TechnicalFlowDiagram.png" alt="Technical Sequence Diagram"></p>
 
@@ -83,11 +85,11 @@ Our system is a basic CRUD (create, read, update, delete) app with some addition
 
 ## Development:
 
-We will start by developing the backend and we start with the central system, which is the inventory management application, and then work outwards. If you work is an agile team, you will know this is the wrong approach. What we are doing here is called ‘horizontal slicing’, when what you would do in an agile is ‘vertical slicing’.
+We will start by developing the inventory management application, and then work outwards to the gateway system. If you work is an agile team, you will know this is the wrong approach. What we are doing here is called ‘horizontal slicing’, when what you would do in an agile environment is ‘vertical slicing’.
 
 > Horizontal slicing is the practice of splitting development into technical layers. Such as splitting a project by frontend, backend, database layer. Horizontal slicing requires all slices to be completed before the client can use the software.
 
-> Vertical slicing is the practice of spltting by functionality. In practise this means small parts of each technical layer will be developed together, allowing functionality to be available sooner, at the sacrifice of having incomplete technical layers.
+> Vertical slicing is the practice of splitting by functionality. In practise this means small parts of each technical layer will be developed together, allowing functionality to be available sooner, at the sacrifice of having incomplete technical layers.
 
 So while I acknowledge that this isn’t the optimum approach, it is a much easier way to handle development from a technical perspective.
 
@@ -112,7 +114,7 @@ from flask import Flask, Response
 def create_application() -> Flask:
     app = Flask(__name__)
 
-    app.route("/")
+    @app.route("/", methods=["GET"])
     def dummy():
         return Response("This is InvSys")
 
@@ -123,11 +125,11 @@ if __name__==“__main__”:
     app.run(host=“127.0.0.1”, port=5000, debug=True)
 ```
 
-Before running this, you’ll notice that we import the flask module, so in your new python environment for `invsys`, running `pip install flask`, else you will get an ImportError like `“ImportError: No module named flask”`
+Before running this, you’ll notice that we import the flask module, so in your new python environment for `invsys`, install Flask using `pip install flask`, else you will get an ImportError like `“ImportError: No module named flask”`.
 
 If you run this using `python application.py`, you should now be able to put `127.0.0.1:5000` in your browser and see `This is InvSys`.
 
-By installing flask we have added a dependency to this component, and as it should be self contained and reproducible with a consistent dependency, we should track this dependancy. We will do this by making a `requirements.txt` file which will list each dependancy and their version. While this can be made manually, we will cheat by running the command `pip freeze > requirements.txt`, which will list all the dependencies (in your hopefully clean python environment) and put them into the requirements.txt file.
+By installing Flask we have added a dependency to this component, and as it should be self contained and reproducible with consistent dependencies, we should track this dependancy. We will do this by making a `requirements.txt` file which will list each dependancy and their version. You can do this manually by adding `Flask==1.1.1` to your `requirements.txt`, but I often cheat by running the command `pip freeze > requirements.txt`, which will list all the dependencies (in your hopefully clean python environment) and put them into the requirements.txt file (this will include any nested dependencies).
 
 ```
 # requirements.txt
@@ -135,7 +137,7 @@ By installing flask we have added a dependency to this component, and as it shou
 Flask==1.1.1
 ```
 
-This dummy application by itself isn't very useful, so before we start developing the actual application, lets define it. We know that the purpose is have resources that can be allocated, with 3 different types of resources. For each resource type, we want the following endpoints (we're being RESTful to an extent):
+This dummy application by itself isn't very useful, so before we start developing the actual application, let's define it. We know that the purpose is to have resources that can be allocated, with 3 different types of resources. For each resource type, we want the following endpoints (we're being RESTful to an extent):
 
 - POST /{resource_type} - to create an instance of the resource
 - GET /{resource_type} - to get all instances of a given resource type
@@ -167,11 +169,11 @@ def create_application() -> Flask:
     return app
 ```
 
-If we were to do this though, our `applications.py` file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
+If we were to do this though, our `applications.py` file would become very large very quickly. Additionally, we'd then need some way to distinguish the flows for creating interval resources and continuous resources (if interval resources were to be added at some point). Instead, we could make the application more modular by using Flask Blueprints. Blueprints allow us to better organise and split our application.
 
 While there may be other ways, I would think the best way to split the blueprints would be one for interval resources, and one for continuous resources. So in this case we will only have one blueprint, just for the continuous resources, but it allows us to make the code more flexible for future development. This reason alone isn't enough for using the Blueprint, because in development you often hear that making code future proof can be a waste of time, so there is another reason we will get to.
 
-So inside our `invsys` directory we will make a `blueprints` directory with an `__init__.py`, and make a file called `continuous_resource_blueprint.py`.
+Inside our `invsys` directory we will make a `blueprints` directory with an `__init__.py`, and make a file called `continuous_resource_blueprint.py`.
 
 At this point your overall project directory should resemble this:
 
@@ -204,7 +206,7 @@ def create_continuous_resource(resource_type):
 # Do the same for all the other endpoints
 ...
 ```
-And then in our application.py we would register the Blueprint like so:
+And then in our `application.py` we would register the Blueprint like so:
 ```python
 # application.py
 
@@ -277,7 +279,7 @@ def create_continuous_resource_blueprint(blueprint_name: str, resource_type: str
 So we have the general setup of the Flask app and the blueprints for handling our three continuous resources. You'll note that the above snippet isn't using the resource_type parameter for anything, and this is because we have been neglecting an essential part of this component.
 
 ### How and where do we store the resources and allocations?
-Well, I said in the introduction that we were going to use SQLAlchemy, so that was a spoiler. We will store the allocations and resources in an SQLite3 database and use SQLAlchemy as an ORM for accessing the database. More specifically we will use flask-SQLAlchemy which you can install using `pip install flask-SQLAlchemy`, remember, you will need to update your requirements.txt file with this new dependancy.
+Well, I said in the introduction that we were going to use SQLAlchemy, so that was a spoiler. We will store the allocations and resources in an SQLite3 database and use SQLAlchemy as an ORM for accessing the database. More specifically we will use flask-SQLAlchemy which you can install using `pip install flask-SQLAlchemy`, remember, you will need to update your `requirements.txt` file with this new dependancy.
 
 As is typical in this guide, I will show you two ways to handle the database related logic, with the latter being my preferred approach in this scenario, but we will get to this shortly as there is some setup and common work that needs to be done first.
 
@@ -311,9 +313,9 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 ```
-Then from our 'application.py' and our routes and blueprints, we can import the db object from this module with no circular dependancy issues.
+Then from our `application.py` and our routes and blueprints, we can import the `db` object from this module with no circular dependancy issues.
 
-So our 'application.py' could now look like this instead:
+Our `application.py` could now look like this instead:
 ```python
 from flask import Flask
 from database import db
@@ -332,13 +334,13 @@ def create_app(db_uri: str) -> Flask:
 
     return app
 ```
-The common aspect will be the models. These are our classes which represent the tables, and the subsequent, and relationships in the database.
+The common aspect will be the models. These are our classes which represent the tables, and the subsequent columns and relationships in the database.
 
 Because we are being generic, we only need two tables. One to represent a continuous resource, and one to represent a continuous resource allocation.
 
 In the `invsys` directory create a subdirectory called `models` with an `__init__.py` and then inside our `models` directory we will create two new files, `continuous_resource.py` and `continuous_resource_allocation.py`.
 
-Your invsys directory should now look like this:
+Your `invsys` directory should now look like this:
 
 ```
 .
@@ -354,9 +356,9 @@ Your invsys directory should now look like this:
     └── continuous_resource_allocation.py
 ```
 
-Lets look at the "continuous_resource.py" first. The ContinuousResource model represents a car/lorry/truck, so each we need a column for the resource type, the resource name (a specific unique identifier which is human readable) and a uuid (also unique, but just a 36 digit uuid, which is somewhat a duplication in purpose as the name column, but the uuid will be used when working with the endpoints). We will add a 'created' datetime column too.
+Lets look at the `continuous_resource.py` first. The ContinuousResource model represents a car/lorry/truck, so each we need a column for the resource type, the resource name (a specific unique identifier which is human readable) and a uuid (also unique, but just a 36 digit uuid, which is somewhat a duplication in purpose as the `name` column, but the uuid will be used when working with the endpoints). We will add a `created` datetime column too.
 
-From a ContinuousResource, it will be useful to be able to access all the allocation related to this resource, so we create an 'allocations' relationship.
+From a ContinuousResource, it will be useful to be able to access all the allocation related to this resource, so we create an `allocations` relationship.
 
 ```python
 # continuous_resource.py
@@ -376,7 +378,7 @@ class ContinuousResource(db.Model):
     allocations = db.relationship("ContinuousResourceAllocation", back_populates="resource", lazy=True)
 ```
 
-Now we look at the `continuous_resource_allocation.py`. We can define a ContinuousResourceAllocation as an object with a from_datetime, and a to_datetime. Then in some cases, the allocation might want to be considered as from infinity or to infinity, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it un-allocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
+Now we look at the `continuous_resource_allocation.py`. We can define a ContinuousResourceAllocation as an object with a `from_datetime`, and a `to_datetime`. Then in some cases, the allocation might want to be considered as `from_infinity` or `to_infinity`, so we will add a boolean column for those two options, and make all four of these columns nullable. Therefore you could create an allocation from now until infinity to indicate an indefinite maintenance period for this resource making it un-allocatable. Again we can add the resource type, an id, and some additional columns like a description, or an allocation type (like a "booking", or "maintenance"). Finally, we will add a json dump column for storing any additional data about the allocation, and we can add a property method to return the dictionary representation, called 'dump'.
 
 To finalise the relationship between the two models, we pass the resource_id of the related ContinuousResource as a ForeignKey column, and then make the 'resource' relationship.
 
@@ -546,7 +548,7 @@ You might be thinking, "What is the point of creating a DAO to decouple the data
 
 Ok, so we have covered the blueprints, the routing of endpoints, the databasing and DAOs, but we still aren't actually returning anything. Each endpoint function should end up with a model object or list of model objects. If you create a resource, you will have a ContinuousResource instance, if you create an allocation, you will have ContinuousResourceAllocation instance, if you get all resources, you will have a list of ContinuousResources.
 
-We can't directly return these objects in our API. Our API returns json. So instead we can create dictionary representations of these objects, and allow flask to return them as json using the `jsonify` function. So each object needs serialiser.
+We can't directly return these objects in our API. Our API returns json. So instead we can create dictionary representations of these objects, and allow Flask to return them as json using the `jsonify` function. So each object needs serialiser.
 
 We can create a new directory called `serialisers` with an `__init__.py`, and we will create a serialiser for each model. So we create `continuous_resource_serialiser.py` and `continuous_resource_allocation_serialiser.py`.
 
@@ -688,7 +690,7 @@ If you open Postman and POST a new car instance to `127.0.0.1:5000/api/cars`, yo
 
 <p align="center"><img src="images/S2_invsys_post_car.png" alt="Post car screenshot in Postman"></p>
 
-We can retrieve the car using GET `127.0.0.1:5000/api/cars`
+We can retrieve the car using GET `127.0.0.1:5000/api/cars`.
 
 <p align="center"><img src="images/S2_invsys_get_cars.png" alt="Get cars screenshot in Postman"></p>
 
@@ -712,7 +714,7 @@ CMD [ "python", "application.py" ]
 ```
 We use `FROM python:3.7-alpine` as our base as it has the correct python version, and the `alpine` images are relatively small compared to non-alpine images (a few megabyes as opposed to a few hundred megabytes). We `COPY requirements.txt /` which makes the file available in our docker image, and then install it using `RUN pip install -r /requirements.txt`. We then copy the rest of our source code into a subdirectory called `app` with `COPY . /app`. Using `WORKDIR /app` means the next commands will be executed in that directory. We `EXPOSE 5001` to expose port 5001, which is the port defined in our `application.py`. Then finally we state the command to run the application, which is `CMD [ "python", "application.py" ]`.
 
-When you run an the application without docker, it will create a database in the invsys directory called `red.db`. Which means when you create your docker image, you will already have your database in your image with any existing data in it. So avoid this by adding a `.dockerignore` file to your directory, containing `red.db`. Now when you build your image, there will be a fresh image. For this project we aren't concerned about database persistence and volumes.
+When you run an the application without Docker, it will create a database in the invsys directory called `red.db` (in our `if __name__=='__main__'` in `application.py`, we pass `sqlite:///red.db` as the db_uri, and if it doesn't exist, SQLAlchemy creates it for us). Which means when you create your Docker image, you will already have your database in your image with any existing data in it. So avoid this by adding a `.dockerignore` file to your directory, containing `red.db`. Now when you build your image, there will be a fresh database. For this project we aren't concerned about database persistence and volumes.
 
 Now that we have a Dockerfile (and our .dockerignore), we can build the image using `docker build -t invsys .`, which will build an image called `invsys` based off of the Dockerfile in our current directory (`.`).
 
@@ -720,12 +722,12 @@ Then you can deploy your application using `docker run -p 5001:5001 invsys` and 
 
 ## Gateway Application
 ### Why do we need one?
-- The Gateway allows us to present a single public interface to access our micro-services. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
-- Another benefit is to orchestrate the authentication and authorisation of requests. Authentication is typically handled by an external system, but then the Gateway will communicate with that system to confirm requests are authorised before internally routing them to the correct micro-services.
-- The Gateway can also handle authorisation, which is determining whether requests have permissions to access certain resources. In many cases, like the `invsys` system we developed above, in our service we don't take into consideration which client is consuming the service. By making our services client-agnostic, we allow them to focus on their specific purpose which makes them more maintainable, more discrete, and more reusable. So our Gateway can then integrate middleware that determines which resources belong to which clients, which itself might done by integrating another micro-service for handling client accounts and resources.
+- The Gateway allows us to present a single interface to access our micro-services. From a technical perspective it means the API client only needs to target a single host and single port instead of communicating with multiple services running on different ports and hosts. So for one, it adds convenience.
+- Another benefit is to orchestrate the authentication and authorisation of requests. Authentication is typically handled by an external system, but then the Gateway will communicate with that system to confirm requests are authenticated before internally routing them to the correct micro-services.
+- The Gateway can also handle authorisation, which is determining whether requests have permissions to access certain resources. In many cases, like the `invsys` system we developed above, we don't take into consideration which client is consuming the service. By making our services client-agnostic, we allow them to focus on their specific purpose which makes them more maintainable, more discrete, and more reusable. So our Gateway can then integrate middleware that determines which resources belong to which clients, which itself might done by integrating another micro-service for handling client accounts and resources.
 
 ### What will ours do?
-We want our gateway to just route requests to our invsys service. Nothing else will be integrated, but by doing this you will see how to consume one service from another service, and when you can do it for one, you can do it for many.
+We want our gateway to just route requests to our `invsys` service. Nothing else will be integrated, but by doing this you will see how to consume one service from another service, and when you can do it for one, you can do it for many.
 
 ### Lets do it
 Inside our main project directory, create a new directory called `gateway`. `cd` into this directory. We will create another Flask application here, though it will be much simpler. Create an `application.py` again, create another fresh python environment and install Flask again. Create a `requirements.txt` again. Your overall project directory structure should look like this:
@@ -754,8 +756,7 @@ Inside our main project directory, create a new directory called `gateway`. `cd`
         ├── continuous_resource_allocation_serialiser.py
         └── continuous_resource_serialiser.py
 ```
-
-So again, before developing the application, lets define it a bit further.
+Again, before developing the application, lets define it a bit further.
 
 ### Definition
 For demonstration purposes, we will only handle two of the `invsys` endpoints for routing. So our application will accept requests to:
@@ -764,8 +765,6 @@ For demonstration purposes, we will only handle two of the `invsys` endpoints fo
 - GET /api/{resource_type}
 
 We expect our application to receive the request from the API client, forward the payload or query strings to `invsys`, then forward the response from `invsys` back to the API client.
-
-... flow diagram
 
 For now, due to the minimal requirements, we will skip using Blueprints and develop directly in our `application.py`. You'll also notice that we have no need currently for any database. So no models or DAOs. We won't need serialisers because we are just forwarding responses.
 
@@ -850,7 +849,7 @@ def get_proxy_headers(response) -> List[Tuple]:
     return headers
 ```
 
-And that is all there is to it for our gateway application. We will add the same Dockerfile, but expose port 5001 instead. In our application.py, and we will set port 5001 in our `if __name__=='__main__'` block.
+And that is all there is to it for our gateway application. We will add the same Dockerfile, but expose port 5001 instead. In our `application.py`, and we will set port `5001` in our `if __name__=='__main__'` block.
 
 We can't simply deploy this application using just `python application.py` because you need an instance of `invsys` running, and you need your network set up to route `invsys` to the correct ip address.
 
@@ -859,7 +858,7 @@ Fortunately, docker can help us with this.
 ## Composing our system
 We have two flask apps. Invsys and Gateway. We want them both to be deployed, and we want Gateway to be able to send requests to Invsys using `invsys` instead of a specific IP.
 
-Docker-compose comes to the rescue. Docker-compose is a tool that allows us to define the deployment of multiple containers, and has the benefit of making each container targetable using the container name. All we need to is create a docker-compose.yaml in our main project directory, which now looks like this:
+Docker-compose is a tool that allows us to define the deployment of multiple containers, and has the added benefit of making each container targetable using the container name. All we need to is create a `docker-compose.yaml` in our main project directory, which now looks like this:
 
 ```
 .
@@ -900,20 +899,17 @@ services:
             - "5001:5001"
     invsys:
         build: invsys
-        ports:
-            - "5000:5000"
 ```
-We are defined two services. One for Gateway and one for Invsys. The key we use as the name of the service is the name used to target that service in the network. As we are naming our Invsys service as `invsys`, any requests from our application that target `invsys` will be routed to the correct ip for that service. We are using the `build` flag in each case, which means the tool will search for the `gateway` and `invsys` subdirectories and use their Dockerfiles to build the image. The port flag is the same as the one used in the `docker run` command, it routes the external docker machine port to the internally exposed port of our containers.
+We have defined two services. One for Gateway and one for Invsys. The key we use as the name of the service is the name used to target that service in the network. As we are naming our Invsys service as `invsys`, any requests from our application that target `invsys` will be routed to the correct ip for that service. We are using the `build` flag in each case, which means the tool will search for the `gateway` and `invsys` subdirectories and use their Dockerfiles to build the image. The port flag is the same as the one used in the `docker run` command, it routes the external docker machine port to the internally exposed port of our containers. You'll notice that we haven't added a port mapping for `invsys` and this is because we want to force requests to go through the gateway. If you wanted to be able to target `invsys` directly too, you would just need to add `ports: - "5000:5000"`.
 
-You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip` (you might need to run `docker-machine start` first, and even `eval $(docker-machine env default)` to set your docker machine config correctly). Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to Invsys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
+You can now deploy the application by running `docker-compose up`. Using docker-compose, your application likely won't be hosted on 127.0.0.1, so you can get the correct ip using `docker-machine ip` (you might need to run `docker-machine start` first, and even `eval $(docker-machine env default)` to set your docker machine config correctly). Then in Postman you can test your requests on `{correct_ip}:5001/api/cars` which should target Gateway and route the requests to InvSys. You can end your deployment using CTRL-c. If you want to deploy in the background, use `docker-compose -d up` and to end your deployment use `docker-compose down`.
 
 With our application deployed, we can post a new car via the gateway (Note the host and port of the request)
 
 <p align="center"><img src="images/S3_gateway_post_car.png" alt="Post car through gateway Postman screenshot"></p>
 
 ## Whats next?
-Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend instead of letting the client consume the inventory backend directly.
-
+Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend internally instead of letting the client consume the inventory backend directly.
 
 Showing a potential admin flow:
 <p align="center"><img src="images/S3_FutureUML_Admin.png" alt="Future Application Admin UML"></p>
@@ -926,5 +922,4 @@ And from there, you would need some sort of external integration with the vehicl
 ### Other things to consider
 This guide has glossed over a few things:
 - Each backend should be unit tested.
-- There are plenty of Flask frameworks that handle serialisation more implicitly by looking at the models and handling the serialisation automatically.
 - Pretty much every decision made in this guide could have been made in a different way with the same end result.
