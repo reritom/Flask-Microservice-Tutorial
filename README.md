@@ -14,6 +14,7 @@ This guide will consider the development of a system comprised of multiple inter
 
 ### Prerequisites:
 - A python environment handler, because we will create multiple environments. I use Conda, but you could also using something like venv or poetry.
+- Python 3.7+
 - You need to have docker installed, this guide won’t cover that process because the [docker documentation](https://https://docs.docker.com/install/) is very complete.
 - Some knowledge of Flask apps, SQL ORMs, and Docker.
 
