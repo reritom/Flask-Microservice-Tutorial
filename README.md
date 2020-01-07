@@ -5,6 +5,7 @@ Typically I skip any guide that requires me to make external accounts or has any
 This guide will consider the development of a system comprised of multiple intercommunicating micro-services. The stack of this application is one of personal preference, but there are any number of different variations, so check out the stack below before we go into further detail.
 
 ### Stack used in this guide:
+- Python 3.7
 - Flask backends
 - SQLite3 with flask SQL Alchemy
 - Docker
