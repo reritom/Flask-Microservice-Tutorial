@@ -41,6 +41,17 @@ For the purpose of this guide, we will make a simple inventory management system
 
 The additional step will be an API gateway backend which is a sort of router and authoriser of the client requests. This means our ‘application’ will consist of two backend components, one being the inventory manager, and one being the api gateway. The application will expose a RESTful interface (we will get to this).
 
+### What is the scenario?
+A prominent tech company has branched into the self-driving car market. In an effort to reduce emissions the company has invested in creating a network of self-driving cars, trucks, and lorries. Their clients are able to request a vehicle to go from location A to location B for a multitude of purposes. You can request a ride, or you can summon a lorry to transport cargo, among other uses.
+
+They have already purchased and retrofitted the vehicles and are keen pilot their project is a small city. Unfortunately, the company they contracted their booking system to fell short. We need to completely re-build their core booking and billing system. On a more positive note, with some manual magic on their side, they can continue their rollout to the pilot city with only the allocation system put in place. They want to make sure they have vehicles available when bookings are requested, and they want to make sure nothing gets doubled booked.
+
+The scope the system that we will develop for them is for handling the allocations of three different type of continuous resource, the self-driving car, lorry, and truck.
+
+We want to be able to register a new instance of each to represent when one has been added into circulation, and we want to be able to delete them to represent when they have been decommissioned. We then want to be able to allocate and deallocate any of them for any period of time.
+
+While we want to expose an API for handling just this for now, we want the system, in the future, to also facilitate the booking and billing aspects of their business.
+
 ### What is the scope of the inventory management system?
 In this system, we consider that we have resources which relate the physical items. The resources should be able to be allocated for arbitrary durations. In this case, we will only consider one type of resource, continuous resources.
 
@@ -51,10 +62,6 @@ Continuous resources are items that can be allocated for any duration, starting 
 The alternative is an interval resource, which would be something like a launchpad or a runway, which may have discrete defined intervals for when they can be booked. Note that in any case, there can’t be any overlap of the allocations made on a resource.
 
 <p align="center"><img src="images/S1_Interval.png" alt="Interval Resource"></p>
-
-The scope of our system is for handling the booking of three different type of continuous resource, the self-driving car, lorry, and truck.
-
-We want to be able to register a new instance of each to represent when one has been added into circulation, and we want to be able to delete them to represent when they have been decommissioned. We then want to be able to allocate and deallocate any of them.
 
 ## System definition?
 Before starting, we should define our system to some extent and define how we expect the user to be able interact with it. We do this using UML diagrams and sequence diagrams respectively.
