@@ -46,7 +46,7 @@ A prominent tech company has branched into the self-driving car market. In an ef
 
 They have already purchased and retrofitted the vehicles and are keen to pilot their project is a small city. Unfortunately, the company they contracted their booking system to fell short. We need to completely re-build their core booking and billing system. On a more positive note, with some manual magic on their side, they can continue their rollout to the pilot city with only the allocation system put in place. They want to make sure they have vehicles available when bookings are requested, and they want to make sure nothing gets doubled booked.
 
-The scope the system that we will develop for them is for handling the allocations of three different type of continuous resource, the self-driving car, lorry, and truck.
+The scope for system that we will develop for them is for handling the inventory and allocations of three different type of continuous resource, the self-driving car, lorry, and truck.
 
 We want to be able to register a new instance of each to represent when one has been added into circulation, and we want to be able to delete them to represent when they have been decommissioned. We then want to be able to allocate and deallocate any of them for any period of time.
 
@@ -916,7 +916,9 @@ With our application deployed, we can post a new car via the gateway (Note the h
 <p align="center"><img src="images/S3_gateway_post_car.png" alt="Post car through gateway Postman screenshot"></p>
 
 ## Whats next?
-Well realistically the inventory system (invsys) would be an internal micro-service consumed by some sort of booking engine. So you could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes a new micro-service that is the booking engine. The booking engine could then integrate pricing and billing backends, and would consume the inventory backend internally instead of letting the client consume the inventory backend directly.
+We have built the inventory system and developed the base of the gateway. The next step for the backend application would be to look at the booking systems and billing systems. The booking system could determine which vehicle to select for a given criteria, and it could then determine the lengths of the allocations before consuming the inventory backend internally instead of letting the client consume the inventory backend directly. The billing system could determine the price of the booking and then integrate external payment providers.
+
+You could have one frontend admin UI which consumes the gateway to create resources and look at allocations, and then you could have another client-specific frontend UI which consumes the booking engine.
 
 Showing a potential admin flow:
 <p align="center"><img src="images/S3_FutureUML_Admin.png" alt="Future Application Admin UML"></p>
