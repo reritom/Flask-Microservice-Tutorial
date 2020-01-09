@@ -930,10 +930,10 @@ Showing a potential user flow:
 
 And from there, you would need some sort of external integration with the vehicle providers or garages. But this is beyond our scope.
 
+### Deploying on local without Docker
+While this guide is focused on deploying with Docker, you are able to deploy on local without it too. Set up your network to route `invsys -> 127.0.0.1` by updating your `/etc/hosts` file with an extra line like `127.0.0.1       invsys`. You can then open two terminal windows. In the first, `cd` to `invsys` and then run `python application.py`, and in the other terminal window, do the same but in the `gateway` directory. Then with Postman you can target either backend on `127.0.0.1`. Docker is for more than just deploying though, so this sub-section is just an aside for those interested.
+
 ### Other things to consider
 This guide has glossed over a few things:
 - Each backend should be unit tested.
 - Pretty much every decision made in this guide could have been made in a different way with the same end result.
-
-#### Deploying on local without Docker
-While this guide is focused on deploying with Docker, you are able to deploy on local without it too. Set up your network to route `invsys -> 127.0.0.1` by updating your `/etc/hosts` file with an extra line like `127.0.0.1       invsys`. You can then open two terminal windows. In the first, `cd` to `invsys` and then run `python application.py`, and in the other terminal window, do the same but in the `gateway` directory. Then with Postman you can target either backend on `127.0.0.1`. Docker is for more than just deploying though, so this sub-section is just an aside for those interested.
